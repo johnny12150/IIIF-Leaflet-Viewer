@@ -1,5 +1,3 @@
-//this version won't support IE9, 10, 11
-// it is  written with ES6
 (function ($) {
     $.fn.work = function () {
         // console.log(this);
@@ -38,7 +36,6 @@
 
         // var obj3 = $('#manifest3');
         // console.log(obj3[0].baseURI);
-
         var checkbox03 = $('#manifest3').parent();
 
         // 存所有path的id
@@ -92,7 +89,7 @@
                 // '<div id="manifest3" style="display:inline-block;">manifest03</div>': manifest.drawnItems2
             };
 
-            // todo: control layers
+            // control layers
             L.control.layers({}, overlay, {
                 position: 'topleft',//'topleft', 'topright', 'bottomleft' or 'bottomright'
                 collapsed: false
@@ -167,7 +164,6 @@
 
             /*繪畫完成，記錄形狀儲存的點與其資訊*/
             map.on(L.Draw.Event.CREATED, function (event) {
-                console.log(map);
                 var layer = event.layer;
                 manifest.drawnItems.addLayer(layer);
                 manifest.drawnItems2.addLayer(layer);
@@ -328,7 +324,7 @@
 
                                 layer._path.id = layer._leaflet_id;
                                 labelBinding(layer, chars, json);
-                                // may not be the best way to add the functionality of updating the annotation right after creating it
+
                                 // todo 目前測試結果這樣可以讓剛新增的可以馬上編輯, 也不會造成其他已存在的無法暫存舊的註記
                                 $(".annoClickChars").unbind('dblclick');
                                 $(".annoClickChars").dblclick(function (e) {
@@ -336,6 +332,10 @@
                                     map.off('mousemove');
                                     textEditorOnDblclick(e);
                                 });
+
+                                for (let n = path_order.length; n < $('path').length; n++)
+                                    path_order.push(($('path')[n].id));
+                                console.log(path_order);
                             }
                             else if (text.text == 'things go sideways' || text.text == 'not an auth action') {
                                 // console.log(text.text);
@@ -359,15 +359,18 @@
 
                                 layer._path.id = layer._leaflet_id;
                                 labelBinding(layer, chars, json);
-                                // may not be the best way to add the functionality of updating the annotation right after creating it
-                                // $(".annoClickChars").dblclick(function (e) {
-                                //     e.preventDefault();
-                                //
-                                //     // disable leaflet map mousemove
-                                //     map.off('mousemove');
-                                //
-                                //     textEditorOnDblclick(e);
-                                // });
+
+                                for (let n = path_order.length; n < $('path').length; n++)
+                                    path_order.push(($('path')[n].id));
+                                console.log(path_order);
+
+                                // 新增後馬上註記
+                                $(".annoClickChars").unbind('dblclick');
+                                $(".annoClickChars").dblclick(function (e) {
+                                    e.preventDefault();
+                                    map.off('mousemove');
+                                    textEditorOnDblclick(e);
+                                });
                             }
                         })
 
@@ -517,9 +520,9 @@
                             }
                         })
                         .catch(function (err) {
-                        // Error :(
-                        console.log(err);
-                    })
+                            // Error :(
+                            console.log(err);
+                        })
                     // end of fetch
 
                 });
@@ -630,9 +633,9 @@
                             }
                         })
                         .catch(function (err) {
-                        // Error :(
-                        console.log(err);
-                    })
+                            // Error :(
+                            console.log(err);
+                        })
                     // end of fetch
                 });
             });
