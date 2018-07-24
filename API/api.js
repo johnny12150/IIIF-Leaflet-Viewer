@@ -222,10 +222,12 @@
 
                     manifest.drawnItems.addLayer(layer);
                     manifest.drawnItems2.addLayer(layer);
+
                     // annoArray會根據 leaflet_id 把資料放進去
                     // manifest.annoArray[layer._leaflet_id] = annoData;
                     // layer._path.id = layer._leaflet_id;
                     // labelBinding(layer, chars);
+
                     // 處理on 的xywh
                     // 做anno 座標edit的話 可能也需要
                     var p = convert_latlng_SVG(annoData.point);
@@ -264,7 +266,6 @@
                         },
                         "on": manifest.currenCanvas["@id"] + "#xywh=" + xywh
                     };
-                    // console.log(json);
                     console.log("anno create count:" + manifest.countCreatAnnotation);
                     var c_index = manifest.index - 1;
                     console.log("canvas_index: " + c_index);
@@ -294,7 +295,6 @@
                             canvas_index: c_index
                         })
                     })
-                    // 修好顯示response
                     // .then(res=>res.json())
                         .then(function (res) {
                             // console.log(res);
@@ -307,20 +307,16 @@
                                 console.log("no need to update otherContent url");
                                 // console.log("anno_index為"+text.num);
                                 manifest.annoArray[layer._leaflet_id] = annoData;
-                                // 處理刪除bug (新增後要馬上可以刪除的)
                                 // 1. 從fetch回來的response把資料給過去
                                 // 要server resopnose 創好的 resource @id 可以得知new_anno_index
                                 new_anno_index = text.num;
-                                // 2. annoArray送他anno_index
+                                // 2. annoArray給他anno_index
                                 manifest.annoArray[layer._leaflet_id].anno_index = new_anno_index;
                                 json.resource['@id'] = text.resources_id;
-                                console.log(text.resources_id);
                                 json.anno_index = new_anno_index;
                                 // 取代原本 @id 是 default
                                 json['@id'] = canvas.otherContent[0]['@id'];
                                 manifest.annolist.push(json);
-                                // console.log("新增之後的annolist:"+ JSON.stringify(manifest.annolist));
-                                // annoArray會根據 leaflet_id 把資料放進去
 
                                 layer._path.id = layer._leaflet_id;
                                 labelBinding(layer, chars, json);
@@ -333,9 +329,10 @@
                                     textEditorOnDblclick(e);
                                 });
 
+                                // 解決只有新增的註記再關閉全部註記後，重新開啟會沒有顏色
                                 for (let n = path_order.length; n < $('path').length; n++)
                                     path_order.push(($('path')[n].id));
-                                console.log(path_order);
+
                             }
                             else if (text.text == 'things go sideways' || text.text == 'not an auth action') {
                                 // console.log(text.text);
@@ -355,14 +352,12 @@
                                 json.anno_index = new_anno_index;
                                 json['@id'] = canvas.otherContent[0]['@id'];
                                 manifest.annolist.push(json);
-                                // console.log("新增之後的annolist:"+ JSON.stringify(manifest.annolist));
 
                                 layer._path.id = layer._leaflet_id;
                                 labelBinding(layer, chars, json);
 
                                 for (let n = path_order.length; n < $('path').length; n++)
                                     path_order.push(($('path')[n].id));
-                                console.log(path_order);
 
                                 // 新增後馬上註記
                                 $(".annoClickChars").unbind('dblclick');
@@ -371,6 +366,7 @@
                                     map.off('mousemove');
                                     textEditorOnDblclick(e);
                                 });
+
                             }
                         })
 
@@ -527,6 +523,7 @@
 
                 });
             });
+            // todo: 刪除註記時，須注意path order內的leaflet id 也需要被移除
             map.on('draw:deleted', function (e) {
                 var anno_that_got_deleted;
                 var layers = e.layers;
@@ -651,6 +648,8 @@
                 console.log(manifest.annoArray);
                 console.log(manifest.annolist);
 
+                // todo: 考慮layer被隱藏時給不給註記(CRUD), 若不給最上面屬性要多layer_status來判斷狀態
+
                 // 存leaflet id 的array
                 var leaflet_ids = Object.keys(e.layer._layers);
 
@@ -663,21 +662,12 @@
             map.on('overlayadd ', function (e) {
                 console.log(e.layer);
 
-                // 存leaflet id 的array
-                var leaflet_ids = Object.keys(e.layer._layers);
-
-                // 全部layer都被清掉的情況
-                // for (let i = 0; i< $('path').length;i++)
-                //     $('path')[i].id = Object.keys(e.layer._layers)[i];
-
                 for (let i = 0; i < $('path').length; i++)
                     $('path')[i].id = path_order[i];
 
             });
 
-
-            // todo: 還要再測試
-            // 從下面移上來的優點未知, 可能有利於reset的
+            // 從下面移上來的優點是確保每次map重建可以執行到event綁定
             $(".annoClickChars").dblclick(function (e) {
                 e.preventDefault();
                 map.off('mousemove');
