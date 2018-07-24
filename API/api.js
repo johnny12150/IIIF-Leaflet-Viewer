@@ -1,3 +1,5 @@
+//this version won't support IE9, 10, 11
+// it is  written with ES6
 (function ($) {
     $.fn.work = function () {
         // console.log(this);
