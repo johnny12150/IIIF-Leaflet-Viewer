@@ -38,6 +38,7 @@
 
         // var obj3 = $('#manifest3');
         // console.log(obj3[0].baseURI);
+
         var checkbox03 = $('#manifest3').parent();
 
         // 存所有path的id
