@@ -7,7 +7,7 @@ This include three major versions:
 * `API`: This is the front-end project of the Annotation-Server, providing the functionality of creating, updating and deleting annotations on the viewer
 
 ### Gallery
-![photo1](./gallery/photo1.png)
+![photo1](./gallery/photo1.PNG)
 
 #### © ascdc all rights reserved
 Special thanks: EustaceCheng <fbi0258zzz@gmail.com>
