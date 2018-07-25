@@ -45,7 +45,7 @@
         console.log(path_order);
 
 
-        /*create leaflet map*/
+        // create leaflet map
         function leafletMap() {
             var canvas = manifest.currenCanvas;
             viewer_offset = $(_this).offset();
@@ -132,11 +132,16 @@
                     circlemarker: false
                 }
             }));
+
+            // control the event which is related to displaying layer groups
             map.on({
                 overlayadd: function (e) {
                     manifest.annoArray.map(function (e) {
                         e.overlay = 'add';
                     });
+                    console.log(e);
+                    for (let i = 0; i < $('path').length; i++)
+                        $('path')[i].id = path_order[i];
 
                 },
                 overlayremove: function (e) {
@@ -146,7 +151,8 @@
 
                 }
             });
-            /*繪圖開始*/
+
+            // 繪圖開始
             add_chose_button();
             add_rotation_button();
             add_info_button();
@@ -643,29 +649,39 @@
             });
 
             // 當checkbox被點擊時會觸發
-            map.on('overlayremove', function (e) {
-                console.log(e.layer);
-                console.log(manifest.annoArray);
-                console.log(manifest.annolist);
+            // 跟上面的map on overlayremove同
+            // map.on('overlayremove', function (e) {
+            // console.log(manifest.annoArray);
+            // console.log(manifest.annolist);
 
-                // todo: 考慮layer被隱藏時給不給註記(CRUD), 若不給最上面屬性要多layer_status來判斷狀態
+            // todo: 考慮layer被隱藏時給不給註記(CRUD), 若不給最上面屬性要多layer_status來判斷狀態
 
-                // 存leaflet id 的array
-                var leaflet_ids = Object.keys(e.layer._layers);
 
-                // for (let i = 0; i< $('path').length;i++)
-                //     $('path')[i].id = Object.keys(e.layer._layers)[i];
-            });
+            // [不必要了]因為剩下還顯示的path的id都還在
+            // 存現在還有顯示的leaflet id 的array
+            //  var leaflet_ids = [];
+            // for(let m=0; m < Object.keys(e.layer._layers).length ; m++) {
+            //     if (e.layer._layers[Object.keys(e.layer._layers)[m]]._map)
+            //             leaflet_ids.push(Object.keys(e.layer._layers)[m]);
+            //     console.log(leaflet_ids);
+            //         }
+
+            // 取特定layer
+            // console.log(e.layer._layers[Object.keys(e.layer._layers)[0]]);
+
+            // for (let i = 0; i< $('path').length;i++)
+            //     $('path')[i].id = Object.keys(e.layer._layers)[i];
+            // });
 
             // todo: 確認10筆以上註記會不會有問題
             // 當layer被add回來
-            map.on('overlayadd ', function (e) {
-                console.log(e.layer);
-
-                for (let i = 0; i < $('path').length; i++)
-                    $('path')[i].id = path_order[i];
-
-            });
+            // map.on('overlayadd ', function (e) {
+            //     console.log(e.layer);
+            //
+            //     for (let i = 0; i < $('path').length; i++)
+            //         $('path')[i].id = path_order[i];
+            //
+            // });
 
             // 從下面移上來的優點是確保每次map重建可以執行到event綁定
             $(".annoClickChars").dblclick(function (e) {
