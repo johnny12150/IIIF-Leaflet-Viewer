@@ -128,7 +128,7 @@
                     rectangle: true,
                     polyline: false,
                     circle: false,
-                    marker: false,
+                    marker: true,
                     circlemarker: false
                 }
             }));
@@ -140,6 +140,8 @@
                         e.overlay = 'add';
                     });
                     console.log(e);
+
+                    //把path的id 補回去
                     for (let i = 0; i < $('path').length; i++)
                         $('path')[i].id = path_order[i];
 
@@ -170,6 +172,10 @@
 
             /*繪畫完成，記錄形狀儲存的點與其資訊*/
             map.on(L.Draw.Event.CREATED, function (event) {
+                console.log(event);
+                //判定layer type是block or marker
+                var layer_type = event.layerType;
+
                 var layer = event.layer;
                 manifest.drawnItems.addLayer(layer);
                 manifest.drawnItems2.addLayer(layer);
@@ -203,8 +209,18 @@
                 $('#annotation_save').click(function (e) {
                     manifest.countCreatAnnotation++;
                     var chars = formateStr(tinyMCE.activeEditor.getContent());
+
+                    // todo: 如果是marker
+                    if(layer_type==='marker') {
+                        var marker_latlng = layer._latlng;
+                        var xy_position = map.project(marker_latlng);
+                        console.log(xy_position);
+                        // xywh 就是xy_position + 1, 1
+                    }
+
                     var zoom = manifest.leaflet.getZoom();
                     var point = strToPoint([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
+
 
                     var annoData = {
                         'bounds': layer.getBounds(),
@@ -238,8 +254,7 @@
                     // 做anno 座標edit的話 可能也需要
                     var p = convert_latlng_SVG(annoData.point);
                     var xywh = formatFloat(p[0].x, 2) + ',' + formatFloat(p[0].y, 2) + ',' + formatFloat((p[1].x - p[0].x), 2) + ',' + formatFloat((p[1].y - p[0].y), 2);
-                    console.log([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
-                    console.log(xywh);
+
                     var json = {
                         "@id": "default",
                         "@type": "oa:Annotation",
@@ -656,7 +671,6 @@
 
             // todo: 考慮layer被隱藏時給不給註記(CRUD), 若不給最上面屬性要多layer_status來判斷狀態
 
-
             // [不必要了]因為剩下還顯示的path的id都還在
             // 存現在還有顯示的leaflet id 的array
             //  var leaflet_ids = [];
@@ -671,16 +685,6 @@
 
             // for (let i = 0; i< $('path').length;i++)
             //     $('path')[i].id = Object.keys(e.layer._layers)[i];
-            // });
-
-            // todo: 確認10筆以上註記會不會有問題
-            // 當layer被add回來
-            // map.on('overlayadd ', function (e) {
-            //     console.log(e.layer);
-            //
-            //     for (let i = 0; i < $('path').length; i++)
-            //         $('path')[i].id = path_order[i];
-            //
             // });
 
             // 從下面移上來的優點是確保每次map重建可以執行到event綁定
@@ -1067,6 +1071,11 @@
                 manifest.leaflet = leafletMap();
 
             });
+            // custom marker button
+            // var marker = $('<div class="marker" aria-hidden="true"><span class="fa fa-map-marker"></span></div>');
+            // var draw = $('.leaflet-draw-toolbar.leaflet-bar.leaflet-draw-toolbar-top');
+            // var separator = $('<div class="separator"></div>');
+            // draw.append(separator, marker);
         }
 
         /*page change right/left button*/
