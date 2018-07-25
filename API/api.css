@@ -1,19 +1,3 @@
-#labelClose{
-    color: 				white;
-    background-color:	black;
-    padding-top: 		1px;
-    padding-bottom: 	1px;
-    padding-right: 		5px;
-    padding-left: 		5px;
-    border-radius:		35px;
-    box-shadow:			5px 5px 5px rgba(140,140,140, 0.4);
-    position:			absolute;
-    top:				5px;
-    right:				5px;
-    -moz-user-select:	none;
-    cursor:				pointer;
-}
-
 .tip{
     padding:				15px;
     box-shadow:			5px 5px 5px rgba(140,140,140, 0.4);
@@ -326,4 +310,19 @@ button, .button {
     border-color: #007095;
     color: #FFFFFF;
     transition: background-color 300ms ease-out;
+}
+
+/*add for marker*/
+.marker{
+    background-color: white;
+    padding-left: 11px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+/*for marker and draw gap*/
+.separator{border-top: 1px solid #ccc;;width: 30px;margin-top: -5px;}
+
+span.fa.fa-map-marker {
+    padding-top: 7px;
+    padding-bottom: 7px;
 }
