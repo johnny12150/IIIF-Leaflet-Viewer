@@ -29,10 +29,13 @@
         manifest.countCreatAnnotation = 0;
         manifest.canvasSize = {height: manifest.currenCanvas.height, width: manifest.currenCanvas.width};
         manifest.leaflet = leafletMap();
+        // 存所有註記的layer
         manifest.drawnItems;
         manifest.annoArray;
-        // new layers
+        // new layers array
         manifest.drawnItems2;
+        // 被隱藏的註記列
+        var hidden_layers = [];
 
         // var obj3 = $('#manifest3');
         // console.log(obj3[0].baseURI);
@@ -145,11 +148,34 @@
                     for (let i = 0; i < $('path').length; i++)
                         $('path')[i].id = path_order[i];
 
+                    //被加回來的layers的leaflet id
+                    console.log(e.layer);
+                    // 從hidden layers中剔除
+                    for (let m = 0; m < Object.keys(e.layer._layers).length; m++) {
+                        var find_index = hidden_layers.indexOf(Object.keys(e.layer._layers)[m]);
+                        hidden_layers.splice(find_index, 1);
+                        console.log(hidden_layers);
+                    }
+
                 },
                 overlayremove: function (e) {
                     manifest.annoArray.map(function (e) {
                         e.overlay = 'remove';
                     });
+                    console.log(e);
+
+                    //被隱藏的layers的leaflet id
+                    console.log(e.layer);
+                    //儲存被隱藏的註記
+                    for (let m = 0; m < Object.keys(e.layer._layers).length; m++) {
+                        hidden_layers.push(Object.keys(e.layer._layers)[m]);
+                        console.log(hidden_layers);
+                    }
+
+                    //map上所有的註記layers
+                    console.log(manifest.drawnItems._layers);
+                    //新增的所有layer
+                    console.log(manifest.drawnItems2);
 
                 }
             });
@@ -172,7 +198,6 @@
 
             /*繪畫完成，記錄形狀儲存的點與其資訊*/
             map.on(L.Draw.Event.CREATED, function (event) {
-                console.log(event);
                 //判定layer type是block or marker
                 var layer_type = event.layerType;
 
@@ -211,7 +236,7 @@
                     var chars = formateStr(tinyMCE.activeEditor.getContent());
 
                     // todo: 如果是marker
-                    if(layer_type==='marker') {
+                    if (layer_type === 'marker') {
                         var marker_latlng = layer._latlng;
                         var xy_position = map.project(marker_latlng);
                         console.log(xy_position);
@@ -705,7 +730,12 @@
             var anno_latLng_array_IDs = [];
             annoMousemove(e.latlng, anno_latLng_array_IDs);
             annoShowByArea(manifest.annoArray);
-            backgroundLabelSwitch(anno_latLng_array_IDs.length);
+            // 切換label會不會顯示在svg layer上
+            // backgroundLabelSwitch(anno_latLng_array_IDs.length);
+            backgroundLabelSwitch(anno_latLng_array_IDs);
+            if (anno_latLng_array_IDs.length)
+                console.log(anno_latLng_array_IDs);
+            // 根據滑鼠游標調整label的位置
             LabelPosition(map.latLngToContainerPoint(e.latlng));
         }
 
@@ -726,12 +756,19 @@
             return array;
         }
 
+        // 切換label會不會顯示在svg layer上
         function backgroundLabelSwitch(l) {
-            if (l != 0) {
-                $('#labelClose').click(function () {
-                    $('#backgroundLabel').hide();
-                });
+            // if (l != 0) {
+            if (l.length != 0) {
                 $('#backgroundLabel').show();
+                console.log('label show');
+                // 目前是因為這個array固定只有一個leaflet id 所以可以這樣用
+                // todo: 如果滑鼠移過兩個註記的處理區域, 處理被隱藏的註記label也會顯示
+                // 可能還要多個條件判斷不是移到區域內就要秀,要判斷是不是隱藏的 => hidden layers
+                var not_hidden = hidden_layers.indexOf(l[0]);
+                if(not_hidden > -1)
+                    $('#anno' + l[0]).show();
+
             } else {
                 $('#backgroundLabel').hide();
             }
