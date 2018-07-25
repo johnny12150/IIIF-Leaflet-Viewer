@@ -241,44 +241,46 @@
                         var xy_position = map.project(marker_latlng);
                         console.log(xy_position);
                         // xywh 就是xy_position + 1, 1
+                        var xywh = xy_position.x +','+xy_position.y+', 1, 1';
+                    }else {
+                        // 四邊形
+                        var zoom = manifest.leaflet.getZoom();
+                        var point = strToPoint([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
+
+
+                        var annoData = {
+                            'bounds': layer.getBounds(),
+                            'point': {'min': layer._latlngs[0][1], 'max': layer._latlngs[0][3]},
+                            'metadata': '',
+                            'chars': chars,
+                            '_leaflet_id': layer._leaflet_id,
+                            'preMouseStatus': '',
+                            'color': colorArray[layer._leaflet_id % 15],
+                            'area': (layer._latlngs[0][3].lat * layer._latlngs[0][3].lat - layer._latlngs[0][1].lat * layer._latlngs[0][1].lat) * (layer._latlngs[0][3].lng * layer._latlngs[0][3].lng - layer._latlngs[0][1].lng * layer._latlngs[0][1].lng),
+                            'target': '',
+                            'overlay': 'add',
+                            'exist': true
+                        };
+
+                        // console.log(point);
+                        // console.log(annoData.point);
+
+                        console.log("anno created");
+                        console.log(annoData);
+
+                        manifest.drawnItems.addLayer(layer);
+                        manifest.drawnItems2.addLayer(layer);
+
+                        // annoArray會根據 leaflet_id 把資料放進去
+                        // manifest.annoArray[layer._leaflet_id] = annoData;
+                        // layer._path.id = layer._leaflet_id;
+                        // labelBinding(layer, chars);
+
+                        // 處理on 的xywh
+                        // 做anno 座標edit的話 可能也需要
+                        var p = convert_latlng_SVG(annoData.point);
+                        var xywh = formatFloat(p[0].x, 2) + ',' + formatFloat(p[0].y, 2) + ',' + formatFloat((p[1].x - p[0].x), 2) + ',' + formatFloat((p[1].y - p[0].y), 2);
                     }
-
-                    var zoom = manifest.leaflet.getZoom();
-                    var point = strToPoint([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
-
-
-                    var annoData = {
-                        'bounds': layer.getBounds(),
-                        'point': {'min': layer._latlngs[0][1], 'max': layer._latlngs[0][3]},
-                        'metadata': '',
-                        'chars': chars,
-                        '_leaflet_id': layer._leaflet_id,
-                        'preMouseStatus': '',
-                        'color': colorArray[layer._leaflet_id % 15],
-                        'area': (layer._latlngs[0][3].lat * layer._latlngs[0][3].lat - layer._latlngs[0][1].lat * layer._latlngs[0][1].lat) * (layer._latlngs[0][3].lng * layer._latlngs[0][3].lng - layer._latlngs[0][1].lng * layer._latlngs[0][1].lng),
-                        'target': '',
-                        'overlay': 'add',
-                        'exist': true
-                    };
-
-                    // console.log(point);
-                    // console.log(annoData.point);
-
-                    console.log("anno created");
-                    console.log(annoData);
-
-                    manifest.drawnItems.addLayer(layer);
-                    manifest.drawnItems2.addLayer(layer);
-
-                    // annoArray會根據 leaflet_id 把資料放進去
-                    // manifest.annoArray[layer._leaflet_id] = annoData;
-                    // layer._path.id = layer._leaflet_id;
-                    // labelBinding(layer, chars);
-
-                    // 處理on 的xywh
-                    // 做anno 座標edit的話 可能也需要
-                    var p = convert_latlng_SVG(annoData.point);
-                    var xywh = formatFloat(p[0].x, 2) + ',' + formatFloat(p[0].y, 2) + ',' + formatFloat((p[1].x - p[0].x), 2) + ',' + formatFloat((p[1].y - p[0].y), 2);
 
                     var json = {
                         "@id": "default",
@@ -733,8 +735,8 @@
             // 切換label會不會顯示在svg layer上
             // backgroundLabelSwitch(anno_latLng_array_IDs.length);
             backgroundLabelSwitch(anno_latLng_array_IDs);
-            if (anno_latLng_array_IDs.length)
-                console.log(anno_latLng_array_IDs);
+            // if (anno_latLng_array_IDs.length)
+            //     console.log(anno_latLng_array_IDs);
             // 根據滑鼠游標調整label的位置
             LabelPosition(map.latLngToContainerPoint(e.latlng));
         }
@@ -761,12 +763,14 @@
             // if (l != 0) {
             if (l.length != 0) {
                 $('#backgroundLabel').show();
-                console.log('label show');
+
                 // 目前是因為這個array固定只有一個leaflet id 所以可以這樣用
                 // todo: 如果滑鼠移過兩個註記的處理區域, 處理被隱藏的註記label也會顯示
                 // 可能還要多個條件判斷不是移到區域內就要秀,要判斷是不是隱藏的 => hidden layers
-                var not_hidden = hidden_layers.indexOf(l[0]);
-                if(not_hidden > -1)
+                //存在hidden layer裡的leaflet_id是string型態
+                var text = l[0].toString();
+                var not_hidden = hidden_layers.indexOf(text);
+                if(not_hidden <= -1)
                     $('#anno' + l[0]).show();
 
             } else {
@@ -1266,6 +1270,7 @@
                     minelem = e;
                 }
             });
+            // 基礎顏色(藍框框)
             manifest.annoArray.map(function (anno) {
                 var i = anno._leaflet_id;
                 $('#anno' + i).hide();
@@ -1277,6 +1282,7 @@
                         stroke: '#3388ff'
                     })
             });
+            // todo: 隱藏部分得導致其他註記顯示失敗
             manifest.annoArray.map(function (anno) {
                 var i = anno._leaflet_id;
                 if (typeof minelem != 'undefined') {
