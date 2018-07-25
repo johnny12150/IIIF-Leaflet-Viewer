@@ -764,14 +764,13 @@
             if (l.length != 0) {
                 $('#backgroundLabel').show();
 
-                // 目前是因為這個array固定只有一個leaflet id 所以可以這樣用
-                // todo: 如果滑鼠移過兩個註記的處理區域, 處理被隱藏的註記label也會顯示
+
                 // 可能還要多個條件判斷不是移到區域內就要秀,要判斷是不是隱藏的 => hidden layers
                 //存在hidden layer裡的leaflet_id是string型態
-                var text = l[0].toString();
-                var not_hidden = hidden_layers.indexOf(text);
-                if(not_hidden <= -1)
-                    $('#anno' + l[0]).show();
+                // var text = l[0].toString();
+                // var not_hidden = hidden_layers.indexOf(text);
+                // if(not_hidden <= -1)
+                //     $('#anno' + l[0]).show();
 
             } else {
                 $('#backgroundLabel').hide();
@@ -1268,6 +1267,15 @@
             array.forEach(function (e) {
                 if (e.area === elem) {
                     minelem = e;
+                    // 檢查這裡的overlay判斷
+                    // 把這裡的e.leaflet_id跟hidden做比對後, 再來決定minelem的overlay
+                    var text = minelem._leaflet_id.toString();
+                    var find_index = hidden_layers.indexOf(text);
+                    console.log(find_index);
+                    console.log(hidden_layers);
+                    if(find_index <= -1 )
+                        minelem.overlay = "add";
+
                 }
             });
             // 基礎顏色(藍框框)
@@ -1286,7 +1294,13 @@
             manifest.annoArray.map(function (anno) {
                 var i = anno._leaflet_id;
                 if (typeof minelem != 'undefined') {
+                    //顯示overlay的狀態, 包括add跟remove
+                    // 明明還顯示的被包括到remove
+                    console.log(minelem.overlay);
+                    console.log(minelem.exist);
                     if (minelem.area === arr[i].area && minelem.overlay === 'add' && minelem.exist) {
+                        // 根本沒有近來執行
+                        console.log('anno show');
                         $('#anno' + i).show();
                         d3.select($('path#' + i)[0])
                             .transition()
