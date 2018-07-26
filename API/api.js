@@ -29,10 +29,8 @@
         manifest.countCreatAnnotation = 0;
         manifest.canvasSize = {height: manifest.currenCanvas.height, width: manifest.currenCanvas.width};
         // 存所有path的id
+        // 只會存到一開瀏覽器就從API讀到的註記
         var path_order = [];
-        // // 只會存到一開瀏覽器就從API讀到的註記
-        // for (let n = 0; n < $('path').length; n++)
-        //     path_order.push(($('path')[n].id));
         manifest.leaflet = leafletMap();
         // 存所有註記的layer
         manifest.drawnItems;
@@ -98,7 +96,6 @@
             //     collapsed: false
             // }).addTo(map);
 
-
             if (canvas.otherContent !== undefined) {
                 let otherContent_url = canvas.otherContent[0]['@id'];
                 if ((otherContent_url != 'undefined') && (otherContent_url != "")) {
@@ -149,7 +146,6 @@
                         hidden_layers.splice(find_index, 1);
                         console.log(hidden_layers);
                     }
-
                 },
                 overlayremove: function (e) {
                     manifest.annoArray.map(function (e) {
@@ -236,7 +232,6 @@
                         // 四邊形
                         var zoom = manifest.leaflet.getZoom();
                         var point = strToPoint([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
-
 
                         var annoData = {
                             'bounds': layer.getBounds(),
@@ -359,7 +354,7 @@
                                 layer._path.id = layer._leaflet_id;
                                 labelBinding(layer, chars, json);
 
-                                // todo 目前測試結果這樣可以讓剛新增的可以馬上編輯, 也不會造成其他已存在的無法暫存舊的註記
+                                // 目前測試結果這樣可以讓剛新增的可以馬上編輯, 也不會造成其他已存在的無法暫存舊的註記
                                 $(".annoClickChars").unbind('dblclick');
                                 $(".annoClickChars").dblclick(function (e) {
                                     e.preventDefault();
@@ -367,9 +362,15 @@
                                     textEditorOnDblclick(e);
                                 });
 
-                                // 解決只有新增的註記再關閉全部註記後，重新開啟會沒有顏色
-                                for (let n = path_order.length; n < $('path').length; n++)
-                                    path_order.push(($('path')[n].id));
+                                // [fix] 只有新增的註記再關閉全部註記後，重新開啟會沒有顏色
+                                // [issue] 這做法會導致當其他註記被隱藏時, 若新增註記, 新的註記的id並不會被存到path order
+                                // 因此導致註記顏色
+                                // for (let n = path_order.length; n < $('path').length; n++)
+                                //     path_order.push(($('path')[n].id));
+
+                                // 每次成功新增的必定一筆, 所以只要在尾端push即可
+                                // [issue] 會導致顏色的順序錯誤(因為後來回來的layer的id
+                                path_order.push(layer._leaflet_id);
 
                             }
                             else if (text.text == 'things go sideways' || text.text == 'not an auth action') {
@@ -445,7 +446,7 @@
                 $('#annotation_cancel').click(function (e) {
                     manifest.drawnItems.removeLayer(layer);
                     manifest.drawnItems2.removeLayer(layer);
-                    console.log('path order還剩下:' + path_order);
+                    // path order不會受這影響
                     tinyMCE.activeEditor.setContent('');
                     $('#confirmOverlay').hide();
                 });
@@ -550,7 +551,6 @@
 
                 });
             });
-            // todo: 刪除註記時，須注意path order內的leaflet id 也需要被移除
             map.on('draw:deleted', function (e) {
                 var anno_that_got_deleted;
                 var layers = e.layers;
@@ -576,7 +576,7 @@
 
                         }
                     });
-                    //do whatever you want; most likely save back to db
+
                     // 把知道要被刪除的註記index 轉換成@id
                     // 讓mongodb可以透過此@id知道要移除哪一筆註記
 
@@ -585,21 +585,6 @@
                     var delete_data_source_id = manifest.annolist.find(x => x.anno_index === anno_that_got_deleted).resource
                         ['@id'];
                     console.log("被刪除的註記的source @id : " + delete_data_source_id);
-
-                    // [problem 02]
-                    // 這裡都錯的原因還未知
-                    // manifest.annolist.map(function(anno){
-                    //     if(anno_that_got_deleted == anno.anno_index){
-                    //         // 要被刪除的註記的source @id
-                    //         delete_data_source_id = manifest.annolist[anno.anno_index]['@id'];
-                    //         // 這裡取到的index是最後一個非要被刪的
-                    //         // 造成更新也會有問題
-                    //         // 問題same
-                    //         console.log(manifest.annolist[anno_that_got_deleted]);
-                    //          console.log("被刪除的註記的source @id : "+delete_data_source_id);
-                    //     }
-                    // });
-
 
                     // 處理一下要給過去的anno id
                     // 直接用第一個annolist的是因為同一筆的annoId都一樣
@@ -653,6 +638,7 @@
                                 // });
                             }
                             else {
+                                // todo: 刪除註記時，須注意path order內的leaflet id 也需要被移除
                                 console.log(layer._leaflet_id);
                                 // 把成功被刪掉的註記的leaflet id 存path order中移除
                                 // 從hidden layers中剔除
@@ -777,6 +763,7 @@
 
                 // 透過id讓path知道框該變甚麼顏色
                 $('path')[$('path').length - 1].id = layer._leaflet_id;
+
                 console.log(path_order);
                 console.log(layer._leaflet_id);
                 path_order.push(layer._leaflet_id);
@@ -1116,7 +1103,7 @@
                 }
             });
 
-        };
+        }
 
         /*get json by url*/
         function GetJSON(url) {
