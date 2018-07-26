@@ -28,6 +28,11 @@
         manifest.currenRotation = 0;
         manifest.countCreatAnnotation = 0;
         manifest.canvasSize = {height: manifest.currenCanvas.height, width: manifest.currenCanvas.width};
+        // 存所有path的id
+        var path_order = [];
+        // // 只會存到一開瀏覽器就從API讀到的註記
+        // for (let n = 0; n < $('path').length; n++)
+        //     path_order.push(($('path')[n].id));
         manifest.leaflet = leafletMap();
         // 存所有註記的layer
         manifest.drawnItems;
@@ -37,19 +42,9 @@
         // 被隱藏的註記列
         var hidden_layers = [];
 
-        // var obj3 = $('#manifest3');
-        // console.log(obj3[0].baseURI);
-        var checkbox03 = $('#manifest3').parent();
-
-        // 存所有path的id
-        var path_order = [];
-        for (let n = 0; n < $('path').length; n++)
-            path_order.push(($('path')[n].id));
-        console.log(path_order);
-
-
         // create leaflet map
         function leafletMap() {
+            //todo: reset後新的learflet id 存進path order
             var canvas = manifest.currenCanvas;
             viewer_offset = $(_this).offset();
             var winSize = {y: $('#mapid')[0].clientHeight, x: $('#mapid')[0].clientWidth};
@@ -105,7 +100,7 @@
 
 
             if (canvas.otherContent !== undefined) {
-                var otherContent_url = canvas.otherContent[0]['@id'];
+                let otherContent_url = canvas.otherContent[0]['@id'];
                 if ((otherContent_url != 'undefined') && (otherContent_url != "")) {
                     var annotationlist = GetJSON(otherContent_url);
                     annotation(annotationlist.resources);
@@ -142,16 +137,14 @@
                     manifest.annoArray.map(function (e) {
                         e.overlay = 'add';
                     });
-                    console.log(e);
-
+                    console.log(path_order);
                     //把path的id 補回去
                     for (let i = 0; i < $('path').length; i++)
                         $('path')[i].id = path_order[i];
 
-                    //被加回來的layers的leaflet id
-                    console.log(e.layer);
                     // 從hidden layers中剔除
                     for (let m = 0; m < Object.keys(e.layer._layers).length; m++) {
+                        //Object.keys(e.layer._layers): 被加回來的layers的leaflet id
                         var find_index = hidden_layers.indexOf(Object.keys(e.layer._layers)[m]);
                         hidden_layers.splice(find_index, 1);
                         console.log(hidden_layers);
@@ -162,10 +155,7 @@
                     manifest.annoArray.map(function (e) {
                         e.overlay = 'remove';
                     });
-                    console.log(e);
 
-                    //被隱藏的layers的leaflet id
-                    console.log(e.layer);
                     //儲存被隱藏的註記
                     for (let m = 0; m < Object.keys(e.layer._layers).length; m++) {
                         hidden_layers.push(Object.keys(e.layer._layers)[m]);
@@ -445,7 +435,7 @@
                         .catch(function (err) {
                             // Error :(
                             console.log(err);
-                        })
+                        });
                     // end
 
                     $('#confirmOverlay').hide();
@@ -455,6 +445,7 @@
                 $('#annotation_cancel').click(function (e) {
                     manifest.drawnItems.removeLayer(layer);
                     manifest.drawnItems2.removeLayer(layer);
+                    console.log('path order還剩下:' + path_order);
                     tinyMCE.activeEditor.setContent('');
                     $('#confirmOverlay').hide();
                 });
@@ -641,7 +632,7 @@
                             if (text == 'things go sideways' || text == 'not an auth action') {
                                 alert('fail to delete the anno');
 
-                                // won't work for deleting for than 1 annotations at once
+                                // won't work for deleting more than 1 annotations at once
                                 // manifest.leaflet.remove();
                                 // manifest.currenRotation = 0;
                                 // manifest.leaflet = leafletMap();
@@ -662,7 +653,12 @@
                                 // });
                             }
                             else {
-                                console.log('');
+                                console.log(layer._leaflet_id);
+                                // 把成功被刪掉的註記的leaflet id 存path order中移除
+                                // 從hidden layers中剔除
+                                // [make sure] path order裡面的元素是number or string
+                                var find_index = path_order.indexOf(layer._leaflet_id);
+                                path_order.splice(find_index, 1);
                             }
                         })
                         .catch(function (err) {
@@ -691,7 +687,6 @@
             $(".annoClickChars").dblclick(function (e) {
                 e.preventDefault();
                 map.off('mousemove');
-                // console.log('double click run');
                 // $(".annoClickChars").unbind('dblclick');
                 textEditorOnDblclick(e);
             });
@@ -706,10 +701,7 @@
             annoMousemove(e.latlng, anno_latLng_array_IDs);
             annoShowByArea(manifest.annoArray);
             // 切換label會不會顯示在svg layer上
-            // backgroundLabelSwitch(anno_latLng_array_IDs.length);
             backgroundLabelSwitch(anno_latLng_array_IDs);
-            // if (anno_latLng_array_IDs.length)
-            //     console.log(anno_latLng_array_IDs);
             // 根據滑鼠游標調整label的位置
             LabelPosition(map.latLngToContainerPoint(e.latlng));
         }
@@ -758,7 +750,6 @@
                 value.anno_index = index;
 
                 manifest.annolist.push(value);
-                // console.log(JSON.stringify(manifest.annolist));
 
                 var layer, shape;
                 shape = 'rectangle';
@@ -781,10 +772,14 @@
 
                 // todo : set layergroup by user
                 set_layerGroup();
+
                 manifest.drawnItems.addLayer(layer);
 
                 // 透過id讓path知道框該變甚麼顏色
                 $('path')[$('path').length - 1].id = layer._leaflet_id;
+                console.log(path_order);
+                console.log(layer._leaflet_id);
+                path_order.push(layer._leaflet_id);
 
                 labelBinding(layer, chars, value);
 
@@ -1055,13 +1050,17 @@
             $('.reset').click(function () {
                 manifest.leaflet.remove();
                 manifest.currenRotation = 0;
+                // 在重建map前先把舊的path order清空
+                path_order = [];
                 manifest.leaflet = leafletMap();
 
             });
+
             $('.rotation').click(function (e) {
                 manifest.leaflet.remove();
                 manifest.currenRotation += parseInt(e.target.getAttribute("value"));
                 manifest.currenRotation = (manifest.currenRotation >= 360) ? manifest.currenRotation - 360 : manifest.currenRotation;
+                path_order = [];
                 manifest.leaflet = leafletMap();
 
             });
