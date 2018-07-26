@@ -448,18 +448,6 @@
                         })
                     // end
 
-                    // IE 11 可能不支援fetch需改成ajax
-                    // $.ajax({
-                    //     type: 'POST',
-                    //     url: url,
-                    //     crossDomain: true,
-                    //     data: { id: annoData._leaflet_id}, //passing data to server
-                    //     success: function(response) {
-                    //         console.log('done!');
-                    //     }
-                    // });
-
-
                     $('#confirmOverlay').hide();
                     tinyMCE.activeEditor.setContent('');
 
@@ -692,27 +680,12 @@
 
             // 當checkbox被點擊時會觸發
             // 跟上面的map on overlayremove同
-            // map.on('overlayremove', function (e) {
-            // console.log(manifest.annoArray);
-            // console.log(manifest.annolist);
+            // map.on('overlayremove', function (e) { })
 
             // todo: 考慮layer被隱藏時給不給註記(CRUD), 若不給最上面屬性要多layer_status來判斷狀態
 
-            // [不必要了]因為剩下還顯示的path的id都還在
-            // 存現在還有顯示的leaflet id 的array
-            //  var leaflet_ids = [];
-            // for(let m=0; m < Object.keys(e.layer._layers).length ; m++) {
-            //     if (e.layer._layers[Object.keys(e.layer._layers)[m]]._map)
-            //             leaflet_ids.push(Object.keys(e.layer._layers)[m]);
-            //     console.log(leaflet_ids);
-            //         }
-
             // 取特定layer
             // console.log(e.layer._layers[Object.keys(e.layer._layers)[0]]);
-
-            // for (let i = 0; i< $('path').length;i++)
-            //     $('path')[i].id = Object.keys(e.layer._layers)[i];
-            // });
 
             // 從下面移上來的優點是確保每次map重建可以執行到event綁定
             $(".annoClickChars").dblclick(function (e) {
@@ -763,14 +736,6 @@
             // if (l != 0) {
             if (l.length != 0) {
                 $('#backgroundLabel').show();
-
-
-                // 可能還要多個條件判斷不是移到區域內就要秀,要判斷是不是隱藏的 => hidden layers
-                //存在hidden layer裡的leaflet_id是string型態
-                // var text = l[0].toString();
-                // var not_hidden = hidden_layers.indexOf(text);
-                // if(not_hidden <= -1)
-                //     $('#anno' + l[0]).show();
 
             } else {
                 $('#backgroundLabel').hide();
@@ -1073,11 +1038,7 @@
 
         /*change page function*/
         function change() {
-            //  leaflet remove 似乎與Uncaught TypeError: Cannot read property '_leaflet_pos' of undefined 錯誤有關
             manifest.leaflet.remove();
-            // 換頁功能也正常 但跟上面的remove有一樣的錯誤訊息
-            // map.remove();
-
             manifest.currenCanvas = manifest.canvasArray[manifest.index - 1];
             manifest.leaflet = leafletMap();
         }
@@ -1095,14 +1056,7 @@
                 manifest.leaflet.remove();
                 manifest.currenRotation = 0;
                 manifest.leaflet = leafletMap();
-                // $(".annoClickChars").dblclick(function (e) {
-                //     e.preventDefault();
-                //
-                //     // disable leaflet map mousemove
-                //     map.off('mousemove');
-                //
-                //     textEditorOnDblclick(e);
-                // });
+
             });
             $('.rotation').click(function (e) {
                 manifest.leaflet.remove();
@@ -1111,6 +1065,7 @@
                 manifest.leaflet = leafletMap();
 
             });
+
             // custom marker button
             // var marker = $('<div class="marker" aria-hidden="true"><span class="fa fa-map-marker"></span></div>');
             // var draw = $('.leaflet-draw-toolbar.leaflet-bar.leaflet-draw-toolbar-top');
@@ -1270,6 +1225,7 @@
                     minelem = e;
                     // 避免leaflet的overlay remove 會把所有layer的overlay屬性都設為remove
                     // 把這裡的e.leaflet_id跟hidden做比對後, 再來決定minelem的overlay
+                    //存在hidden layer裡的leaflet_id是string型態
                     var text = minelem._leaflet_id.toString();
                     var find_index = hidden_layers.indexOf(text);
                     console.log(find_index);
