@@ -1247,6 +1247,7 @@
             $('#clickEventLabel').hide();
         }
 
+        // 處理d3 render
         function annoShowByArea(arr) {
             var array = [];
             var prems = '';
@@ -1267,7 +1268,7 @@
             array.forEach(function (e) {
                 if (e.area === elem) {
                     minelem = e;
-                    // 檢查這裡的overlay判斷
+                    // 避免leaflet的overlay remove 會把所有layer的overlay屬性都設為remove
                     // 把這裡的e.leaflet_id跟hidden做比對後, 再來決定minelem的overlay
                     var text = minelem._leaflet_id.toString();
                     var find_index = hidden_layers.indexOf(text);
@@ -1278,6 +1279,7 @@
 
                 }
             });
+
             // 基礎顏色(藍框框)
             manifest.annoArray.map(function (anno) {
                 var i = anno._leaflet_id;
@@ -1290,17 +1292,13 @@
                         stroke: '#3388ff'
                     })
             });
-            // todo: 隱藏部分得導致其他註記顯示失敗
+
+            // 決定要顯示哪個註記label
             manifest.annoArray.map(function (anno) {
                 var i = anno._leaflet_id;
                 if (typeof minelem != 'undefined') {
-                    //顯示overlay的狀態, 包括add跟remove
-                    // 明明還顯示的被包括到remove
-                    console.log(minelem.overlay);
-                    console.log(minelem.exist);
+                    // minelem.overlay: 顯示overlay的狀態, 包括add跟remove
                     if (minelem.area === arr[i].area && minelem.overlay === 'add' && minelem.exist) {
-                        // 根本沒有近來執行
-                        console.log('anno show');
                         $('#anno' + i).show();
                         d3.select($('path#' + i)[0])
                             .transition()
