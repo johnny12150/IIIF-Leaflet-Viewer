@@ -1,7 +1,7 @@
 (function ($) {
     $.fn.work = function () {
         // console.log(this);
-        var API_domain;
+        let API_domain;
         //alert('change success');
         var _this = this;
         var colorArray = ['aqua', 'fuchsia', 'lime', 'maroon', 'navy', 'olive', 'orange', 'purple', 'red', 'silver', 'gray', 'teal', 'white', 'yellow', 'green'];
@@ -30,7 +30,7 @@
         manifest.canvasSize = {height: manifest.currenCanvas.height, width: manifest.currenCanvas.width};
         // 存所有path的id
         // 只會存到一開瀏覽器就從API讀到的註記
-        var path_order = [];
+        let path_order = [];
         manifest.leaflet = leafletMap();
         // 存所有註記的layer
         manifest.drawnItems;
@@ -38,7 +38,7 @@
         // new layers array
         manifest.drawnItems2;
         // 被隱藏的註記列
-        var hidden_layers = [];
+        let hidden_layers = [];
 
         // create leaflet map
         function leafletMap() {
@@ -50,12 +50,13 @@
 
             var rotation = manifest.currenRotation;
             manifest.annoArray = [];
+
             for (zoomtemp = 0; zoomtemp < 18; zoomtemp += 1) {
                 if (Math.max(canvas.height, canvas.width) < 256 * Math.pow(2, zoomtemp)) {
                     break;
                 }
             }
-            console.log("project zoom value:" + zoomtemp);
+            // console.log("project zoom value:" + zoomtemp);
 
             map = L.map('mapid', {
                 crs: L.CRS.Simple,
@@ -78,7 +79,7 @@
             manifest.drawnItems2 = L.featureGroup().addTo(map);
 
             // 控制顯示分層的選項
-            var overlay = {
+            let overlay = {
                 'fetch anno': manifest.drawnItems,
                 'newly add': manifest.drawnItems2,
                 // '<div id="manifest3" style="display:inline-block;">manifest03</div>': manifest.drawnItems2
@@ -141,7 +142,7 @@
                     // 從hidden layers中剔除
                     for (let m = 0; m < Object.keys(e.layer._layers).length; m++) {
                         //Object.keys(e.layer._layers): 被加回來的layers的leaflet id
-                        var find_index = hidden_layers.indexOf(Object.keys(e.layer._layers)[m]);
+                        let find_index = hidden_layers.indexOf(Object.keys(e.layer._layers)[m]);
                         hidden_layers.splice(find_index, 1);
                         console.log(hidden_layers);
                     }
@@ -179,7 +180,7 @@
             /*繪畫完成，記錄形狀儲存的點與其資訊*/
             map.on(L.Draw.Event.CREATED, function (event) {
                 //判定layer type是block or marker
-                var layer_type = event.layerType;
+                let layer_type = event.layerType;
 
                 // 取其style值, 含有scale
                 console.log($('.leaflet-proxy.leaflet-zoom-animated')[0].style.cssText);
@@ -218,18 +219,14 @@
                     manifest.countCreatAnnotation++;
                     var chars = formateStr(tinyMCE.activeEditor.getContent());
                     var zoom = manifest.leaflet.getZoom();
-                    console.log(manifest.leaflet);
-                    var xywh;
+                    let xywh;
 
                     // todo: 如果是marker
                     if (layer_type === 'marker') {
-                        var marker_latlng = layer._latlng;
-                        // 可以帶zoom參數 (與官網不同)
-                        var xy_position = map.project(marker_latlng, zoomtemp);
-
-                        console.log(zoom);
-                        console.log(zoomtemp);
-                        console.log(xy_position);
+                        let marker_latlng = layer._latlng;
+                        // 可以帶zoom參數 (與官網不同) https://leafletjs.com/reference-1.3.2.html#projection
+                        // leaflet js 3709行附近的function
+                        let xy_position = map.project(marker_latlng, zoomtemp);
 
                         // xywh 就是xy_position + 1, 1
                         xywh = xy_position.x +','+xy_position.y+', 1, 1';
@@ -237,7 +234,6 @@
                         console.log(xywh);
 
                     } else {
-                        console.log(layer);
                         // 四邊形
 
                         // 做map unproject, strToPoint帶進去的參數是xywh
@@ -310,16 +306,16 @@
                         "on": manifest.currenCanvas["@id"] + "#xywh=" + xywh
                     };
                     console.log("anno create count:" + manifest.countCreatAnnotation);
-                    var c_index = manifest.index - 1;
+                    let c_index = manifest.index - 1;
                     console.log("canvas_index: " + c_index);
 
-                    var full_mid = manifest.data['@id'];
-                    var cut = full_mid.split("/GET/").pop();
-                    var mId = cut.split("/manifest")[0];
+                    let full_mid = manifest.data['@id'];
+                    let cut = full_mid.split("/GET/").pop();
+                    let mId = cut.split("/manifest")[0];
 
                     // var url = 'http://172.16.100.20:3033/api/POST/anno/mongo';
-                    var url_mysql = 'http://172.16.100.20:3033/api/POST/anno/mysql';
-                    var new_anno_index;
+                    let url_mysql = 'http://172.16.100.20:3033/api/POST/anno/mysql';
+                    let new_anno_index;
                     // fetch to save anno
                     fetch(url_mysql, {
                         method: "POST",
@@ -354,6 +350,8 @@
                                 // 要server resopnose 創好的 resource @id 可以得知new_anno_index
                                 new_anno_index = text.num;
                                 // 2. annoArray給他anno_index
+                                //todo: debug
+                                console.log(new_anno_index);
                                 manifest.annoArray[layer._leaflet_id].anno_index = new_anno_index;
                                 json.resource['@id'] = text.resources_id;
                                 json.anno_index = new_anno_index;
@@ -365,8 +363,10 @@
                                 labelBinding(layer, chars, json);
 
                                 // 目前測試結果這樣可以讓剛新增的可以馬上編輯, 也不會造成其他已存在的無法暫存舊的註記
-                                $(".annoClickChars").unbind('dblclick');
-                                $(".annoClickChars").dblclick(function (e) {
+                                // cache the jquery selector for performance
+                                let $annoClickChars = $(".annoClickChars");
+                                $annoClickChars.unbind('dblclick');
+                                $annoClickChars.dblclick(function (e) {
                                     e.preventDefault();
                                     map.off('mousemove');
                                     textEditorOnDblclick(e);
@@ -375,8 +375,8 @@
                                 // [fix] 只有新增的註記再關閉全部註記後，重新開啟會沒有顏色
                                 // [issue] 這做法會導致當其他註記被隱藏時, 若新增註記, 新的註記的id並不會被存到path order
                                 // 因此導致註記顏色
-                                // for (let n = path_order.length; n < $('path').length; n++)
-                                //     path_order.push(($('path')[n].id));
+                                for (let n = path_order.length; n < $('path').length; n++)
+                                    path_order.push(($('path')[n].id));
 
                                 // 每次成功新增的必定一筆, 所以只要在尾端push即可
                                 // [issue] 會導致顏色的順序錯誤(因為後來回來的layer的id
@@ -1225,8 +1225,7 @@
                     //存在hidden layer裡的leaflet_id是string型態
                     var text = minelem._leaflet_id.toString();
                     var find_index = hidden_layers.indexOf(text);
-                    console.log(find_index);
-                    console.log(hidden_layers);
+
                     if (find_index <= -1)
                         minelem.overlay = "add";
 
