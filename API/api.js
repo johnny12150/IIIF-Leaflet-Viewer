@@ -219,9 +219,8 @@
                     manifest.countCreatAnnotation++;
                     var chars = formateStr(tinyMCE.activeEditor.getContent());
                     var zoom = manifest.leaflet.getZoom();
-                    let xywh;
+                    let xywh, point;
 
-                    // todo: 如果是marker
                     if (layer_type === 'marker') {
                         let marker_latlng = layer._latlng;
                         // 可以帶zoom參數 (與官網不同) https://leafletjs.com/reference-1.3.2.html#projection
@@ -230,14 +229,30 @@
 
                         // xywh 就是xy_position + 1, 1
                         xywh = xy_position.x +','+xy_position.y+', 1, 1';
+                        point = strToPoint([xy_position.x, xy_position.y, 1, 1]);
 
+                        // todo: 補annoData, point
+                        var annoData = {
+                            'bounds': '',
+                            // 'point': {'min': layer._latlngs[0][1], 'max': layer._latlngs[0][3]},
+                            'point': point,
+                            'metadata': '',
+                            'chars': chars,
+                            '_leaflet_id': layer._leaflet_id,
+                            'preMouseStatus': '',
+                            'color': colorArray[layer._leaflet_id % 15],
+                            'area': 1,
+                            'target': '',
+                            'overlay': 'add',
+                            'exist': true
+                        };
                         console.log(xywh);
 
                     } else {
                         // 四邊形
 
                         // 做map unproject, strToPoint帶進去的參數是xywh
-                        var point = strToPoint([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
+                        point = strToPoint([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
 
                         var annoData = {
                             'bounds': layer.getBounds(),
@@ -257,7 +272,7 @@
                         // console.log(annoData.point);
 
                         // console.log("anno created");
-                        // console.log(annoData);
+                        console.log(annoData);
 
                         manifest.drawnItems.addLayer(layer);
                         manifest.drawnItems2.addLayer(layer);
@@ -306,8 +321,8 @@
                         "on": manifest.currenCanvas["@id"] + "#xywh=" + xywh
                     };
                     console.log("anno create count:" + manifest.countCreatAnnotation);
+                    // canvas_index
                     let c_index = manifest.index - 1;
-                    console.log("canvas_index: " + c_index);
 
                     let full_mid = manifest.data['@id'];
                     let cut = full_mid.split("/GET/").pop();
@@ -350,8 +365,6 @@
                                 // 要server resopnose 創好的 resource @id 可以得知new_anno_index
                                 new_anno_index = text.num;
                                 // 2. annoArray給他anno_index
-                                //todo: debug
-                                console.log(new_anno_index);
                                 manifest.annoArray[layer._leaflet_id].anno_index = new_anno_index;
                                 json.resource['@id'] = text.resources_id;
                                 json.anno_index = new_anno_index;
@@ -359,6 +372,10 @@
                                 json['@id'] = canvas.otherContent[0]['@id'];
                                 manifest.annolist.push(json);
 
+                                //todo: [issue] marker error
+                                // undefined
+                                console.log(layer);
+                                console.log(layer._path);
                                 layer._path.id = layer._leaflet_id;
                                 labelBinding(layer, chars, json);
 
@@ -396,6 +413,7 @@
                                 manifest.annoArray[layer._leaflet_id] = annoData;
                                 canvas.otherContent[0]['@id'] = text.text;
                                 new_anno_index = text.num;
+                                // todo: potential bug
                                 manifest.annoArray[layer._leaflet_id].anno_index = new_anno_index;
                                 json.resource['@id'] = text.resources_id;
                                 json.anno_index = new_anno_index;
