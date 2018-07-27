@@ -214,19 +214,39 @@
                 $('#annotation_save').click(function (e) {
                     manifest.countCreatAnnotation++;
                     var chars = formateStr(tinyMCE.activeEditor.getContent());
+                    var zoom = manifest.leaflet.getZoom();
+                    console.log(zoom);
+                    var xywh;
 
                     // todo: 如果是marker
                     if (layer_type === 'marker') {
                         var marker_latlng = layer._latlng;
                         var xy_position = map.project(marker_latlng);
+                        // map.latLngToPoint not a function
+                        // var pro = map.latLngToPoint(marker_latlng, zoom);
                         console.log(xy_position);
+                        var x_ratio = xy_position.x/$('#mapid').width();
+                        var y_ratio = xy_position.y/$('#mapid').height();
+                        xywh = xywh = manifest.currenCanvas.width * x_ratio +','+manifest.currenCanvas.height * y_ratio+', 1, 1';
+                        console.log(x_ratio);
+                        console.log(manifest.currenCanvas.width * x_ratio);
+
+                        // console.log(pro);
+
                         // xywh 就是xy_position + 1, 1
-                        var xywh = xy_position.x +','+xy_position.y+', 1, 1';
+                        // xywh = xy_position.x +','+xy_position.y+', 1, 1';
+
                         // todo: 仿照四邊形的做
-                        var point = strToPoint([xy_position.x, xy_position.y, 1, 1]);
-                    }else {
+                        // var point = strToPoint([xy_position.x, xy_position.y, 1, 1]);
+                        // var p = convert_latlng_SVG(point);
+                        // xywh = formatFloat(p[0].x, 2) + ',' + formatFloat(p[0].y, 2) + ',' + formatFloat((p[1].x - p[0].x), 2) + ',' + formatFloat((p[1].y - p[0].y), 2);
+
+                        console.log(xywh);
+
+                    } else {
+                        console.log(layer);
                         // 四邊形
-                        var zoom = manifest.leaflet.getZoom();
+
                         // 做map unproject, strToPoint帶進去的參數是xywh
                         var point = strToPoint([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
 
@@ -247,8 +267,8 @@
                         // console.log(point);
                         // console.log(annoData.point);
 
-                        console.log("anno created");
-                        console.log(annoData);
+                        // console.log("anno created");
+                        // console.log(annoData);
 
                         manifest.drawnItems.addLayer(layer);
                         manifest.drawnItems2.addLayer(layer);
@@ -261,7 +281,7 @@
                         // 處理on 的xywh
                         // 做anno 座標edit的話 可能也需要
                         var p = convert_latlng_SVG(annoData.point);
-                        var xywh = formatFloat(p[0].x, 2) + ',' + formatFloat(p[0].y, 2) + ',' + formatFloat((p[1].x - p[0].x), 2) + ',' + formatFloat((p[1].y - p[0].y), 2);
+                        xywh = formatFloat(p[0].x, 2) + ',' + formatFloat(p[0].y, 2) + ',' + formatFloat((p[1].x - p[0].x), 2) + ',' + formatFloat((p[1].y - p[0].y), 2);
                     }
 
                     var json = {
@@ -1213,7 +1233,7 @@
                     var find_index = hidden_layers.indexOf(text);
                     console.log(find_index);
                     console.log(hidden_layers);
-                    if(find_index <= -1 )
+                    if (find_index <= -1)
                         minelem.overlay = "add";
 
                 }
