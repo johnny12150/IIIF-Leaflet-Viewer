@@ -42,7 +42,6 @@
 
         // create leaflet map
         function leafletMap() {
-            //todo: reset後新的learflet id 存進path order
             var canvas = manifest.currenCanvas;
             viewer_offset = $(_this).offset();
             var winSize = {y: $('#mapid')[0].clientHeight, x: $('#mapid')[0].clientWidth};
@@ -158,11 +157,6 @@
                         console.log(hidden_layers);
                     }
 
-                    //map上所有的註記layers
-                    console.log(manifest.drawnItems._layers);
-                    //新增的所有layer
-                    console.log(manifest.drawnItems2);
-
                 }
             });
 
@@ -228,9 +222,12 @@
                         console.log(xy_position);
                         // xywh 就是xy_position + 1, 1
                         var xywh = xy_position.x +','+xy_position.y+', 1, 1';
+                        // todo: 仿照四邊形的做
+                        var point = strToPoint([xy_position.x, xy_position.y, 1, 1]);
                     }else {
                         // 四邊形
                         var zoom = manifest.leaflet.getZoom();
+                        // 做map unproject, strToPoint帶進去的參數是xywh
                         var point = strToPoint([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
 
                         var annoData = {
