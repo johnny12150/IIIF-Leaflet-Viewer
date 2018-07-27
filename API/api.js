@@ -181,6 +181,7 @@
                 //判定layer type是block or marker
                 var layer_type = event.layerType;
 
+                // 取其style值, 含有scale
                 console.log($('.leaflet-proxy.leaflet-zoom-animated')[0].style.cssText);
 
                 var layer = event.layer;
@@ -217,32 +218,21 @@
                     manifest.countCreatAnnotation++;
                     var chars = formateStr(tinyMCE.activeEditor.getContent());
                     var zoom = manifest.leaflet.getZoom();
-                    console.log(zoom);
+                    console.log(manifest.leaflet);
                     var xywh;
 
                     // todo: 如果是marker
                     if (layer_type === 'marker') {
                         var marker_latlng = layer._latlng;
-                        var xy_position = map.project(marker_latlng);
-                        // map.latLngToPoint not a function
-                        // var pro = map.latLngToPoint(marker_latlng, zoom);
-                        console.log(xy_position);
-                        var x_ratio = xy_position.x/$('#mapid').width();
-                        var y_ratio = xy_position.y/$('#mapid').height();
-                        // xywh = xywh = manifest.currenCanvas.width * x_ratio +','+manifest.currenCanvas.height * y_ratio+', 1, 1';
-                        xywh = xy_position.x * 2.13613 +','+ xy_position.y * 2.13613+', 1, 1';
-                        console.log(x_ratio);
-                        console.log(manifest.currenCanvas.width * x_ratio);
+                        // 可以帶zoom參數 (與官網不同)
+                        var xy_position = map.project(marker_latlng, zoomtemp);
 
-                        // console.log(pro);
+                        console.log(zoom);
+                        console.log(zoomtemp);
+                        console.log(xy_position);
 
                         // xywh 就是xy_position + 1, 1
-                        // xywh = xy_position.x +','+xy_position.y+', 1, 1';
-
-                        // todo: 仿照四邊形的做
-                        // var point = strToPoint([xy_position.x, xy_position.y, 1, 1]);
-                        // var p = convert_latlng_SVG(point);
-                        // xywh = formatFloat(p[0].x, 2) + ',' + formatFloat(p[0].y, 2) + ',' + formatFloat((p[1].x - p[0].x), 2) + ',' + formatFloat((p[1].y - p[0].y), 2);
+                        xywh = xy_position.x +','+xy_position.y+', 1, 1';
 
                         console.log(xywh);
 
