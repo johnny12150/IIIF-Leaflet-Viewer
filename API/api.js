@@ -373,7 +373,7 @@
                                 manifest.annolist.push(json);
 
                                 //todo: [issue] marker error
-                                // undefined
+                                // for marker, undefined
                                 console.log(layer);
                                 console.log(layer._path);
                                 layer._path.id = layer._leaflet_id;
@@ -469,6 +469,9 @@
 
                     $('#confirmOverlay').hide();
                     tinyMCE.activeEditor.setContent('');
+                    //remove marker
+                    if (layer_type === 'marker')
+                        map.removeLayer(layer);
 
                 });
                 $('#annotation_cancel').click(function (e) {
