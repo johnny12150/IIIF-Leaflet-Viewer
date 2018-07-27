@@ -181,6 +181,8 @@
                 //判定layer type是block or marker
                 var layer_type = event.layerType;
 
+                console.log($('.leaflet-proxy.leaflet-zoom-animated')[0].style.cssText);
+
                 var layer = event.layer;
                 manifest.drawnItems.addLayer(layer);
                 manifest.drawnItems2.addLayer(layer);
@@ -227,7 +229,8 @@
                         console.log(xy_position);
                         var x_ratio = xy_position.x/$('#mapid').width();
                         var y_ratio = xy_position.y/$('#mapid').height();
-                        xywh = xywh = manifest.currenCanvas.width * x_ratio +','+manifest.currenCanvas.height * y_ratio+', 1, 1';
+                        // xywh = xywh = manifest.currenCanvas.width * x_ratio +','+manifest.currenCanvas.height * y_ratio+', 1, 1';
+                        xywh = xy_position.x * 2.13613 +','+ xy_position.y * 2.13613+', 1, 1';
                         console.log(x_ratio);
                         console.log(manifest.currenCanvas.width * x_ratio);
 
@@ -806,6 +809,7 @@
             });
         }
 
+        // todo: 控制annoClickInnerDown 裡面能不能顯示
         function labelBinding(layer, chars, value) {
             var titleChars = titlize(chars);
             var htmlTag = '<div id="anno' + layer._leaflet_id + '" class="tipbox"><a class="tip" style="background-color:' + colorArray[layer._leaflet_id % 15] + ';"></a><a class="tipTitle">' + titleChars + '</a></div>';
