@@ -230,7 +230,6 @@
                         xywh = xy_position.x +','+xy_position.y+', 1, 1';
                         point = strToPoint([xy_position.x, xy_position.y, 1, 1]);
 
-                        // todo: 補annoData, point
                         var annoData = {
                             'bounds': '',
                             // 'point': {'min': layer._latlngs[0][1], 'max': layer._latlngs[0][3]},
@@ -361,6 +360,7 @@
                             if (text.text == 'add new one') {
                                 console.log("no need to update otherContent url");
                                 // console.log("anno_index為"+text.num);
+
                                 manifest.annoArray[layer._leaflet_id] = annoData;
                                 // 1. 從fetch回來的response把資料給過去
                                 // 要server resopnose 創好的 resource @id 可以得知new_anno_index
@@ -374,6 +374,8 @@
                                 manifest.annolist.push(json);
 
                                 if (layer_type == 'marker') {
+                                    // 取消四邊形所存的anno data
+                                    manifest.annoArray[layer._leaflet_id] = '';
                                     //remove marker
                                     map.removeLayer(layer);
 
@@ -387,6 +389,11 @@
 
                                     manifest.drawnItems.addLayer(layer);
                                     manifest.drawnItems2.addLayer(layer);
+
+                                    //更新anno data的leaflet id
+                                    annoData._leaflet_id = layer._leaflet_id;
+                                    annoData.bounds = layer.getBounds();
+                                    manifest.annoArray[layer._leaflet_id] = annoData;
 
                                     console.log(layer);
                                     console.log(layer._path);
@@ -408,13 +415,14 @@
 
                                 // [fix] 只有新增的註記再關閉全部註記後，重新開啟會沒有顏色
                                 // [issue] 這做法會導致當其他註記被隱藏時, 若新增註記, 新的註記的id並不會被存到path order
-                                // 因此導致註記顏色
-                                for (let n = path_order.length; n < $('path').length; n++)
-                                    path_order.push(($('path')[n].id));
+                                // 因此導致註記顏色沒有被顯示
+                                // [issue] 存進去的id是string 並非number
+                                // for (let n = path_order.length; n < $('path').length; n++)
+                                //     path_order.push(($('path')[n].id));
 
                                 // 每次成功新增的必定一筆, 所以只要在尾端push即可
-                                // [issue] 會導致顏色的順序錯誤(因為後來回來的layer的id
-                                // path_order.push(layer._leaflet_id);
+                                // [issue] 會導致顏色的順序錯誤(因為後來回來的layer的id不一定在最後面)
+                                path_order.push(layer._leaflet_id);
 
                             }
                             else if (text.text == 'things go sideways' || text.text == 'not an auth action') {
@@ -438,6 +446,8 @@
                                 manifest.annolist.push(json);
 
                                 if (layer_type == 'marker') {
+                                    // 取消四邊形所存的anno data
+                                    manifest.annoArray[layer._leaflet_id] = '';
                                     //remove marker
                                     map.removeLayer(layer);
 
@@ -452,6 +462,11 @@
                                     manifest.drawnItems.addLayer(layer);
                                     manifest.drawnItems2.addLayer(layer);
 
+                                    //更新anno data的leaflet id
+                                    annoData._leaflet_id = layer._leaflet_id;
+                                    annoData.bounds = layer.getBounds();
+                                    manifest.annoArray[layer._leaflet_id] = annoData;
+
                                     console.log(layer);
                                     console.log(layer._path);
                                     // end of marker requirements
@@ -461,8 +476,10 @@
                                 layer._path.id = layer._leaflet_id;
                                 labelBinding(layer, chars, json);
 
-                                for (let n = path_order.length; n < $('path').length; n++)
-                                    path_order.push(($('path')[n].id));
+                                // for (let n = path_order.length; n < $('path').length; n++)
+                                //     path_order.push(($('path')[n].id));
+
+                                path_order.push(layer._leaflet_id);
 
                                 // 新增後馬上註記
                                 $(".annoClickChars").unbind('dblclick');
