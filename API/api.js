@@ -220,12 +220,13 @@
                     var chars = formateStr(tinyMCE.activeEditor.getContent());
                     var zoom = manifest.leaflet.getZoom();
                     let xywh, point;
+                    let xy_position ='';
 
                     if (layer_type === 'marker') {
                         let marker_latlng = layer._latlng;
                         // 可以帶zoom參數 (與官網不同) https://leafletjs.com/reference-1.3.2.html#projection
                         // leaflet js 3709行附近的function
-                        let xy_position = map.project(marker_latlng, zoomtemp);
+                        xy_position = map.project(marker_latlng, zoomtemp);
 
                         // xywh 就是xy_position + 1, 1
                         xywh = xy_position.x +','+xy_position.y+', 1, 1';
@@ -373,9 +374,32 @@
                                 manifest.annolist.push(json);
 
                                 //todo: [issue] marker error
-                                // for marker, undefined
+                                // for marker, layer._path is undefined
+                                // 長方形的預設就有_path
+                                // pehaps create one with d3?
+                                // var create_path = d3.select("g").append("path")
+                                //     .attr("x", xy_position.x)
+                                //     .attr("y", xy_position.y)
+                                //     .attr("width", 1)
+                                //     .attr("height", 1)
+                                //     .attr("class", 'leaflet-interactive')
+                                //     .attr("stroke", '#3388ff')
+                                //     .attr("stroke-opacity", 1)
+                                //     .attr("stroke-width", 3)
+                                //     .attr("stroke-linecap", 'round')
+                                //     .attr("stroke-linejoin", 'round')
+                                //     .attr("fill", '#3388ff');
+
+                                // 讓leaflet可以透過d3 繪製annotation block
+                                let latLng = L.latLngBounds(point.min, point.max);
+                                layer = L.rectangle(latLng);
+
+                                manifest.drawnItems.addLayer(layer);
+
                                 console.log(layer);
                                 console.log(layer._path);
+                                // end of marker requirements
+
                                 layer._path.id = layer._leaflet_id;
                                 labelBinding(layer, chars, json);
 
@@ -784,6 +808,7 @@
                         point.max.lng += padding;
                     }
                 });
+                // 讓leaflet可以透過d3 繪製annotation block
                 var latLng = L.latLngBounds(point.min, point.max);
                 layer = L.rectangle(latLng);
 
@@ -795,8 +820,8 @@
                 // 透過id讓path知道框該變甚麼顏色
                 $('path')[$('path').length - 1].id = layer._leaflet_id;
 
-                console.log(path_order);
-                console.log(layer._leaflet_id);
+                // console.log(path_order);
+                // console.log(layer._leaflet_id);
                 path_order.push(layer._leaflet_id);
 
                 labelBinding(layer, chars, value);
