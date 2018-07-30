@@ -186,8 +186,6 @@
                 // console.log($('.leaflet-proxy.leaflet-zoom-animated')[0].style.cssText);
 
                 var layer = event.layer;
-                // manifest.drawnItems.addLayer(layer);
-                // manifest.drawnItems2.addLayer(layer);
 
                 $('#confirmOverlay').show();
                 var box = $('#confirmBox');
@@ -416,7 +414,7 @@
 
                                 // 每次成功新增的必定一筆, 所以只要在尾端push即可
                                 // [issue] 會導致顏色的順序錯誤(因為後來回來的layer的id
-                                path_order.push(layer._leaflet_id);
+                                // path_order.push(layer._leaflet_id);
 
                             }
                             else if (text.text == 'things go sideways' || text.text == 'not an auth action') {
@@ -510,14 +508,8 @@
                     $('#confirmOverlay').hide();
                     tinyMCE.activeEditor.setContent('');
 
-                    // //remove marker
-                    // if (layer_type === 'marker')
-                    //     map.removeLayer(layer);
-
                 });
                 $('#annotation_cancel').click(function (e) {
-                    manifest.drawnItems.removeLayer(layer);
-                    manifest.drawnItems2.removeLayer(layer);
                     // path order不會受這影響
                     tinyMCE.activeEditor.setContent('');
                     $('#confirmOverlay').hide();
