@@ -387,6 +387,12 @@
                                     let latLng = L.latLngBounds(point.min, point.max);
                                     layer = L.rectangle(latLng);
 
+                                    //testing video layer
+                                    // @ref: https://leafletjs.com/examples/video-overlay/example.html
+                                    // let videourl = 'https://www.mapbox.com/bites/00188/patricia_nasa.webm';
+                                    // layer = L.videoOverlay(videourl, latLng);
+                                    // map.addLayer(layer);
+
                                     manifest.drawnItems.addLayer(layer);
                                     manifest.drawnItems2.addLayer(layer);
 
@@ -450,10 +456,6 @@
                                     manifest.annoArray[layer._leaflet_id] = '';
                                     //remove marker
                                     map.removeLayer(layer);
-
-                                    //todo: [issue] marker error
-                                    // for marker, layer._path is undefined
-                                    // 長方形的預設就有_path
 
                                     // 讓leaflet可以透過d3 繪製annotation block
                                     let latLng = L.latLngBounds(point.min, point.max);
