@@ -183,11 +183,11 @@
                 let layer_type = event.layerType;
 
                 // 取其style值, 含有scale
-                console.log($('.leaflet-proxy.leaflet-zoom-animated')[0].style.cssText);
+                // console.log($('.leaflet-proxy.leaflet-zoom-animated')[0].style.cssText);
 
                 var layer = event.layer;
-                manifest.drawnItems.addLayer(layer);
-                manifest.drawnItems2.addLayer(layer);
+                // manifest.drawnItems.addLayer(layer);
+                // manifest.drawnItems2.addLayer(layer);
 
                 $('#confirmOverlay').show();
                 var box = $('#confirmBox');
@@ -251,6 +251,8 @@
 
                     } else {
                         // 四邊形
+                        manifest.drawnItems.addLayer(layer);
+                        manifest.drawnItems2.addLayer(layer);
 
                         // 做map unproject, strToPoint帶進去的參數是xywh
                         point = strToPoint([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
@@ -373,32 +375,25 @@
                                 json['@id'] = canvas.otherContent[0]['@id'];
                                 manifest.annolist.push(json);
 
-                                //todo: [issue] marker error
-                                // for marker, layer._path is undefined
-                                // 長方形的預設就有_path
-                                // pehaps create one with d3?
-                                // var create_path = d3.select("g").append("path")
-                                //     .attr("x", xy_position.x)
-                                //     .attr("y", xy_position.y)
-                                //     .attr("width", 1)
-                                //     .attr("height", 1)
-                                //     .attr("class", 'leaflet-interactive')
-                                //     .attr("stroke", '#3388ff')
-                                //     .attr("stroke-opacity", 1)
-                                //     .attr("stroke-width", 3)
-                                //     .attr("stroke-linecap", 'round')
-                                //     .attr("stroke-linejoin", 'round')
-                                //     .attr("fill", '#3388ff');
+                                if (layer_type == 'marker') {
+                                    //remove marker
+                                    map.removeLayer(layer);
 
-                                // 讓leaflet可以透過d3 繪製annotation block
-                                let latLng = L.latLngBounds(point.min, point.max);
-                                layer = L.rectangle(latLng);
+                                    //todo: [issue] marker error
+                                    // for marker, layer._path is undefined
+                                    // 長方形的預設就有_path
 
-                                manifest.drawnItems.addLayer(layer);
+                                    // 讓leaflet可以透過d3 繪製annotation block
+                                    let latLng = L.latLngBounds(point.min, point.max);
+                                    layer = L.rectangle(latLng);
 
-                                console.log(layer);
-                                console.log(layer._path);
-                                // end of marker requirements
+                                    manifest.drawnItems.addLayer(layer);
+                                    manifest.drawnItems2.addLayer(layer);
+
+                                    console.log(layer);
+                                    console.log(layer._path);
+                                    // end of marker requirements
+                                }
 
                                 layer._path.id = layer._leaflet_id;
                                 labelBinding(layer, chars, json);
@@ -443,6 +438,27 @@
                                 json.anno_index = new_anno_index;
                                 json['@id'] = canvas.otherContent[0]['@id'];
                                 manifest.annolist.push(json);
+
+                                if (layer_type == 'marker') {
+                                    //remove marker
+                                    map.removeLayer(layer);
+
+                                    //todo: [issue] marker error
+                                    // for marker, layer._path is undefined
+                                    // 長方形的預設就有_path
+
+                                    // 讓leaflet可以透過d3 繪製annotation block
+                                    let latLng = L.latLngBounds(point.min, point.max);
+                                    layer = L.rectangle(latLng);
+
+                                    manifest.drawnItems.addLayer(layer);
+                                    manifest.drawnItems2.addLayer(layer);
+
+                                    console.log(layer);
+                                    console.log(layer._path);
+                                    // end of marker requirements
+                                }
+
 
                                 layer._path.id = layer._leaflet_id;
                                 labelBinding(layer, chars, json);
@@ -493,9 +509,10 @@
 
                     $('#confirmOverlay').hide();
                     tinyMCE.activeEditor.setContent('');
-                    //remove marker
-                    if (layer_type === 'marker')
-                        map.removeLayer(layer);
+
+                    // //remove marker
+                    // if (layer_type === 'marker')
+                    //     map.removeLayer(layer);
 
                 });
                 $('#annotation_cancel').click(function (e) {
