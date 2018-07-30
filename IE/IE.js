@@ -26,9 +26,15 @@
         manifest.currenRotation = 0;
         manifest.countCreatAnnotation = 0;
         manifest.canvasSize ={height:manifest.currenCanvas.height,width:manifest.currenCanvas.width};
+        let path_order = [];
         manifest.leaflet = leafletMap();
         manifest.drawnItems;
         manifest.annoArray;
+        // new layers array
+        manifest.drawnItems2;
+        // 被隱藏的註記列
+        let hidden_layers = [];
+
         /*create leaflet map*/
         function leafletMap() {
             var canvas = manifest.currenCanvas;
@@ -61,8 +67,19 @@
                 setMaxBounds:true,
                 rotation:manifest.currenRotation
             }).addTo(map);
+
             manifest.drawnItems = L.featureGroup().addTo(map);
-            L.control.layers({},{'drawlayer': manifest.drawnItems}, {
+            manifest.drawnItems2 = L.featureGroup().addTo(map);
+
+            // 控制顯示分層的選項
+            let overlay = {
+                'fetch anno': manifest.drawnItems,
+                'newly add': manifest.drawnItems2,
+                // '<div id="manifest3" style="display:inline-block;">manifest03</div>': manifest.drawnItems2
+            };
+
+            // control layers
+            L.control.layers({}, overlay, {
                 position: 'topleft',//'topleft', 'topright', 'bottomleft' or 'bottomright'
                 collapsed: false
             }).addTo(map);
@@ -76,8 +93,11 @@
                 }
             }
 
+            // control the type of annotations
             map.addControl(new L.Control.Draw({
                 edit: {
+                    // 選擇要控制的featuregroup, 只能有一個不能是多個
+                    // 因此每個layer都必須盡到這個manifest.drawnItems (layer可以存在多個manifest.drawnItems)
                     featureGroup: manifest.drawnItems,
                     poly: {
                         allowIntersection: false
@@ -92,20 +112,44 @@
                     rectangle: true,
                     polyline: false,
                     circle: false,
-                    marker: false,
+                    marker: true,
                     circlemarker: false
                 }
             }));
-            map.on({
-                overlayadd: function(e) {
-                    manifest.annoArray.map(function(e){e.overlay='add';});
 
+            // control the event which is related to displaying layer groups
+            map.on({
+                overlayadd: function (e) {
+                    manifest.annoArray.map(function (e) {
+                        e.overlay = 'add';
+                    });
+                    console.log(path_order);
+                    //把path的id 補回去
+                    for (let i = 0; i < $('path').length; i++)
+                        $('path')[i].id = path_order[i];
+
+                    // 從hidden layers中剔除
+                    for (let m = 0; m < Object.keys(e.layer._layers).length; m++) {
+                        //Object.keys(e.layer._layers): 被加回來的layers的leaflet id
+                        let find_index = hidden_layers.indexOf(Object.keys(e.layer._layers)[m]);
+                        hidden_layers.splice(find_index, 1);
+                        console.log(hidden_layers);
+                    }
                 },
-                overlayremove: function(e) {
-                    manifest.annoArray.map(function(e){e.overlay='remove';});
+                overlayremove: function (e) {
+                    manifest.annoArray.map(function (e) {
+                        e.overlay = 'remove';
+                    });
+
+                    //儲存被隱藏的註記
+                    for (let m = 0; m < Object.keys(e.layer._layers).length; m++) {
+                        hidden_layers.push(Object.keys(e.layer._layers)[m]);
+                        console.log(hidden_layers);
+                    }
 
                 }
             });
+
             /*繪圖開始*/
             add_chose_button();
             add_rotation_button();
@@ -121,76 +165,127 @@
             map.on('mousemove', function(e){mousemoveOnMap(e)});
             /*繪畫完成，記錄形狀儲存的點與其資訊*/
             map.on(L.Draw.Event.CREATED, function(event) {
+//判定layer type是block or marker
+                let layer_type = event.layerType;
+
+                // 取其style值, 含有scale
+                // console.log($('.leaflet-proxy.leaflet-zoom-animated')[0].style.cssText);
+
                 var layer = event.layer;
-                manifest.drawnItems.addLayer(layer);
+
                 $('#confirmOverlay').show();
                 var box = $('#confirmBox');
                 var overlay = $('#confirmOverlay');
 
-                if(y + box.height() >= overlay.height()){
-                    if(x + box.width() >= overlay.width()){
-                        box.css('left', x-box.width());
-                        box.css('top', y-box.height());
-                    }else{
+                if (y + box.height() >= overlay.height()) {
+                    if (x + box.width() >= overlay.width()) {
+                        box.css('left', x - box.width());
+                        box.css('top', y - box.height());
+                    } else {
                         box.css('left', x);
-                        box.css('top', y-box.height());
+                        box.css('top', y - box.height());
                     }
-                }else if(x + box.width() >= overlay.width()){
-                    if(y + box.height() >= overlay.height()){
-                        box.css('left', x-box.width());
-                        box.css('top', y-box.height());
-                    }else{
-                        box.css('left', x-box.width());
+                } else if (x + box.width() >= overlay.width()) {
+                    if (y + box.height() >= overlay.height()) {
+                        box.css('left', x - box.width());
+                        box.css('top', y - box.height());
+                    } else {
+                        box.css('left', x - box.width());
                         box.css('top', y);
                     }
-                }else{
+                } else {
                     $('#confirmBox')
                         .css('left', x)
                         .css('top', y);
                 }
 
-                $('#annotation_save').click(function(e) {
+                $('#annotation_save').click(function (e) {
                     manifest.countCreatAnnotation++;
                     var chars = formateStr(tinyMCE.activeEditor.getContent());
-                    var zoom = manifest.leaflet.getZoom();
-                    var point = strToPoint([layer._pxBounds.min.x,layer._pxBounds.min.y,layer._pxBounds.max.x-layer._pxBounds.min.x,layer._pxBounds.max.y-layer._pxBounds.min.y]);
+                    let xywh, point, annoData;
+                    let xy_position = '';
 
-                    var annoData = {
-                        'bounds': layer.getBounds(),
-                        'point': {'min':layer._latlngs[0][1],'max':layer._latlngs[0][3]},
-                        'metadata':'',
-                        'chars': chars,
-                        '_leaflet_id': layer._leaflet_id,
-                        'preMouseStatus': '',
-                        'color': colorArray[layer._leaflet_id%15],
-                        'area':( layer._latlngs[0][3].lat * layer._latlngs[0][3].lat - layer._latlngs[0][1].lat * layer._latlngs[0][1].lat ) * ( layer._latlngs[0][3].lng * layer._latlngs[0][3].lng - layer._latlngs[0][1].lng * layer._latlngs[0][1].lng ),
-                        'target':'',
-                        'overlay':'add',
-                        'exist':true
-                    };
+                    if (layer_type === 'marker') {
+                        let marker_latlng = layer._latlng;
+                        // 可以帶zoom參數 (與官網不同) https://leafletjs.com/reference-1.3.2.html#projection
+                        // leaflet js 3709行附近的function
+                        xy_position = map.project(marker_latlng, zoomtemp);
 
-                    // console.log(point);
-                    // console.log(annoData.point);
-                    //
-                    // console.log("anno created");
-                    // console.log(annoData);
+                        // xywh 就是xy_position + 1, 1
+                        xywh = xy_position.x + ',' + xy_position.y + ', 1, 1';
+                        point = strToPoint([xy_position.x, xy_position.y, 1, 1]);
 
-                    manifest.drawnItems.addLayer(layer);
-                    // annoArray會根據 leaflet_id 把資料放進去
-                    manifest.annoArray[layer._leaflet_id] = annoData;
-                    layer._path.id=layer._leaflet_id;
-                    labelBinding(layer,chars);
-                    // 處理on 的xywh
-                    // 做anno 座標edit的話 可能也需要
-                    var p = convert_latlng_SVG(annoData.point);
-                    var xywh = formatFloat(p[0].x,2)+','+formatFloat(p[0].y,2)+','+formatFloat((p[1].x-p[0].x),2)+','+formatFloat((p[1].y-p[0].y),2);
-                    console.log([layer._pxBounds.min.x,layer._pxBounds.min.y,layer._pxBounds.max.x-layer._pxBounds.min.x,layer._pxBounds.max.y-layer._pxBounds.min.y]);
-                    console.log(xywh);
+                        annoData = {
+                            'bounds': '',
+                            'point': point,
+                            'metadata': '',
+                            'chars': chars,
+                            '_leaflet_id': layer._leaflet_id,
+                            'preMouseStatus': '',
+                            'color': colorArray[layer._leaflet_id % 15],
+                            'area': 1,
+                            'target': '',
+                            'overlay': 'add',
+                            'exist': true
+                        };
+                        console.log(xywh);
+
+                    } else {
+                        // 四邊形
+                        manifest.drawnItems.addLayer(layer);
+                        manifest.drawnItems2.addLayer(layer);
+
+                        // 做map unproject, strToPoint帶進去的參數是xywh
+                        point = strToPoint([layer._pxBounds.min.x, layer._pxBounds.min.y, layer._pxBounds.max.x - layer._pxBounds.min.x, layer._pxBounds.max.y - layer._pxBounds.min.y]);
+
+                        annoData = {
+                            'bounds': layer.getBounds(),
+                            'point': {'min': layer._latlngs[0][1], 'max': layer._latlngs[0][3]},
+                            'metadata': '',
+                            'chars': chars,
+                            '_leaflet_id': layer._leaflet_id,
+                            'preMouseStatus': '',
+                            'color': colorArray[layer._leaflet_id % 15],
+                            'area': (layer._latlngs[0][3].lat * layer._latlngs[0][3].lat - layer._latlngs[0][1].lat * layer._latlngs[0][1].lat) * (layer._latlngs[0][3].lng * layer._latlngs[0][3].lng - layer._latlngs[0][1].lng * layer._latlngs[0][1].lng),
+                            'target': '',
+                            'overlay': 'add',
+                            'exist': true
+                        };
+
+                        console.log(annoData);
+
+                        manifest.drawnItems.addLayer(layer);
+                        manifest.drawnItems2.addLayer(layer);
+
+                        // 處理on 的xywh
+                        // 做anno 座標edit的話 可能也需要
+                        var p = convert_latlng_SVG(annoData.point);
+                        xywh = formatFloat(p[0].x, 2) + ',' + formatFloat(p[0].y, 2) + ',' + formatFloat((p[1].x - p[0].x), 2) + ',' + formatFloat((p[1].y - p[0].y), 2);
+                    }
+
                     var json = {
-                        "@id":"default",
-                        "@type":"oa:Annotation",
+                        "@id": "default",
+                        "@type": "oa:Annotation",
                         "motivation": "sc:painting",
-                        "metadata": [],
+                        "metadata": [
+                            {
+                                "label": "Author",
+                                "value": "luluyen"
+                            },
+                            {
+                                "label": "Published",
+                                "value": [
+                                    {
+                                        "@value": "Academia Sinica Center for Digital Cultures",
+                                        "@language": "en"
+                                    },
+                                    {
+                                        "@value": "數位文化中心",
+                                        "@language": "zh-TW"
+                                    }
+                                ]
+                            }
+                        ],
                         "resource": {
                             "@id": "https://cyberisland.teldap.tw/album/zHxo/annotation/body_mmNltghrjZwmgrmTIbelETIkeYjSihbw_0",
                             "@type": "dctypes:Text",
@@ -198,16 +293,15 @@
                             "chars": chars,
                             "language": navigator.language
                         },
-                        "on": manifest.currenCanvas["@id"]+"#xywh="+xywh
+                        "on": manifest.currenCanvas["@id"] + "#xywh=" + xywh
                     };
-                    // console.log(json);
-                    console.log("anno create count:"+manifest.countCreatAnnotation);
-                    var c_index = manifest.index-1;
-                    console.log("canvas_index: " + c_index);
+                    console.log("anno create count:" + manifest.countCreatAnnotation);
+                    // canvas_index
+                    let c_index = manifest.index - 1;
 
-                    console.log("---------------------------------------------------------------------");
-                    console.log("mId :" + JSON.stringify(manifest.data));
-                    console.log("mId :" + manifest.data.mId);
+                    let full_mid = manifest.data['@id'];
+                    let cut = full_mid.split("/GET/").pop();
+                    let mId = cut.split("/manifest")[0];
 
 
                     // var url = 'http://172.16.100.20:3033/api/POST/anno/mongo';
@@ -223,35 +317,117 @@
                         crossDomain: true,
                         data:
                             JSON.stringify({
-                            anno_data: json.resource.chars,
-                            anno_place: json.on,
-                            other_content:canvas.otherContent[0]['@id'],
-                            mId:manifest.data.mId,
-                            canvas_index: c_index
-                        }), //passing data to server
+                                anno_data: json.resource.chars,
+                                anno_place: json.on,
+                                other_content: canvas.otherContent[0]['@id'],
+                                mId: manifest.data.mId,
+                                canvas_index: c_index
+                            }), //passing data to server
                         success: function(response) {
-                            var res_data = response;
+                            // todo: support auth
+                            let res_data = response;
                             console.log(res_data);
-                            if(res_data.text=='add new one') {
+                            if (res_data.text === 'add new one') {
                                 console.log("no need to update otherContent url");
-                                console.log(res_data.resources_id);
-                                new_anno_index = res_data.num;
+                                // console.log("anno_index為"+text.num);
+
+                                manifest.annoArray[layer._leaflet_id] = annoData;
+                                new_anno_index = text.num;
                                 manifest.annoArray[layer._leaflet_id].anno_index = new_anno_index;
-                                json.resource['@id'] = res_data.resources_id;
+                                json.resource['@id'] = text.resources_id;
                                 json.anno_index = new_anno_index;
                                 // 取代原本 @id 是 default
                                 json['@id'] = canvas.otherContent[0]['@id'];
                                 manifest.annolist.push(json);
+
+                                if (layer_type === 'marker') {
+                                    // 取消四邊形所存的anno data
+                                    manifest.annoArray[layer._leaflet_id] = '';
+                                    //remove marker
+                                    map.removeLayer(layer);
+
+                                    // 讓leaflet可以透過d3 繪製annotation block
+                                    let latLng = L.latLngBounds(point.min, point.max);
+                                    layer = L.rectangle(latLng);
+
+                                    manifest.drawnItems.addLayer(layer);
+                                    manifest.drawnItems2.addLayer(layer);
+
+                                    //更新anno data的leaflet id
+                                    annoData._leaflet_id = layer._leaflet_id;
+                                    annoData.bounds = layer.getBounds();
+                                    manifest.annoArray[layer._leaflet_id] = annoData;
+
+                                    console.log(layer);
+                                    console.log(layer._path);
+                                    // end of marker requirements
+                                }
+
+                                layer._path.id = layer._leaflet_id;
+                                labelBinding(layer, chars, json);
+
+                                // cache the jquery selector for performance
+                                let $annoClickChars = $(".annoClickChars");
+                                $annoClickChars.unbind('dblclick');
+                                $annoClickChars.dblclick(function (e) {
+                                    e.preventDefault();
+                                    map.off('mousemove');
+                                    textEditorOnDblclick(e);
+                                });
+
+                                // 每次成功新增的必定一筆, 所以只要在尾端push即可
+                                // [issue] 會導致顏色的順序錯誤(因為後來回來的layer的id不一定在最後面)
+                                path_order.push(layer._leaflet_id);
+
                             }
                             else {
-                                console.log("updated otherContent Url: " + res_data.text);
-                                canvas.otherContent[0]['@id'] = res_data.text;
-                                new_anno_index = res_data.num;
+                                console.log("updated otherContent Url: " + text.text);
+                                manifest.annoArray[layer._leaflet_id] = annoData;
+                                canvas.otherContent[0]['@id'] = text.text;
+                                new_anno_index = text.num;
                                 manifest.annoArray[layer._leaflet_id].anno_index = new_anno_index;
-                                json.resource['@id'] = res_data.resources_id;
+                                json.resource['@id'] = text.resources_id;
                                 json.anno_index = new_anno_index;
                                 json['@id'] = canvas.otherContent[0]['@id'];
                                 manifest.annolist.push(json);
+
+                                if (layer_type == 'marker') {
+                                    // 取消四邊形所存的anno data
+                                    manifest.annoArray[layer._leaflet_id] = '';
+                                    //remove marker
+                                    map.removeLayer(layer);
+
+                                    // 讓leaflet可以透過d3 繪製annotation block
+                                    let latLng = L.latLngBounds(point.min, point.max);
+                                    layer = L.rectangle(latLng);
+
+                                    manifest.drawnItems.addLayer(layer);
+                                    manifest.drawnItems2.addLayer(layer);
+
+                                    //更新anno data的leaflet id
+                                    annoData._leaflet_id = layer._leaflet_id;
+                                    annoData.bounds = layer.getBounds();
+                                    manifest.annoArray[layer._leaflet_id] = annoData;
+
+                                    console.log(layer);
+                                    console.log(layer._path);
+                                    // end of marker requirements
+                                }
+
+
+                                layer._path.id = layer._leaflet_id;
+                                labelBinding(layer, chars, json);
+
+                                path_order.push(layer._leaflet_id);
+
+                                // 新增後馬上註記
+                                $(".annoClickChars").unbind('dblclick');
+                                $(".annoClickChars").dblclick(function (e) {
+                                    e.preventDefault();
+                                    map.off('mousemove');
+                                    textEditorOnDblclick(e);
+                                });
+
                             }
                         },
                         error: function(data){
@@ -271,6 +447,7 @@
                 });
 
             });
+
             // 註解位置update
             map.on('draw:edited', function (e) {
                 var layers = e.layers;
@@ -359,6 +536,8 @@
                     });
                 });
             });
+
+            //todo: update till having the same functionality with API.js
             map.on('draw:deleted', function (e) {
                 var anno_that_got_deleted ;
                 var layers = e.layers;
@@ -378,7 +557,7 @@
 
                     // var delete_data_source_id = manifest.annolist.find(x => x.anno_index === anno_that_got_deleted).resource['@id'];
                     var found = $.grep(manifest.annolist, function (x) {
-                       return x.anno_index === anno_that_got_deleted;
+                        return x.anno_index === anno_that_got_deleted;
                     });
                     // console.log("jquery array find: "+JSON.stringify(found[0]));
                     var delete_data_source_id = found[0].resource["@id"];
@@ -703,7 +882,7 @@
         /*change page function*/
         function change() {
             //  leaflet remove 似乎與Uncaught TypeError: Cannot read property '_leaflet_pos' of undefined 錯誤有關
-             manifest.leaflet.remove();
+            manifest.leaflet.remove();
             // 換頁功能也正常 但跟上面的remove有一樣的錯誤訊息
             // map.remove();
 
@@ -787,7 +966,7 @@
                 async: false,
                 dataType: "JSON",
                 success: function(response) {
-                   // console.log(response);
+                    // console.log(response);
                     data = response;
                 },
                 error: function(xhr, status, error) {
