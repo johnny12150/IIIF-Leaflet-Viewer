@@ -164,6 +164,7 @@
             // 繪圖開始
             add_chose_button();
             add_rotation_button();
+            //若info button壞掉(特定manifest沒有其需要的屬性, 有機會導致換頁壞掉)
             add_info_button();
 
             map.on(L.Draw.Event.DRAWSTART, function (event) {
@@ -1371,21 +1372,38 @@
                 map.scrollWheelZoom.disable();
                 icon.hide();
             });
-            var info = $('<div id="info" class="list-group">' +
-                '<div class="scrollbar" id="style-1"><div class="force-overflow">' +
-                '<span id="infoClose" > X </span>' +
-                '<dl><dt>manifest URI</dt><dd><a href="' + manifest.data['@id'] + '">' + manifest.data['@id'] + '</a></dd></dl>' +
-                '<dl><dt>Label</dt><dd>' + data1.label + '</dd></dl>' +
-                '<dl><dt>Description</dt><dd>' + data1.description + '</dd></dl>' + '<dl><dt>Attribution</dt><dd>' + data1.attribution + '</dd></dl>' +
-                '<dl><dt>License</dt><dd>' + data1.license + '</dd></dl>' +
-                '<dl><dt>Logo</dt><dd>' + data1.logo['@id'] + '</dd></dl>' +
-                '<dl><dt>Viewing Direction</dt><dd>' + data1.viewingDirection + '</dd></dl>' +
-                '<dl><dt>Viewing Hint</dt><dd>' + data1.viewingHint + '</dd></dl>' +
-                '<dl><dt>' + data1.metadata[0].label + '</dt><dd>' + data1.metadata[0].value + '</dd></dl>' +
-                '<dl><dt>' + data1.metadata[1].label + '</dt><dd>' + p + '</dd></dl>' +
-                '<dl><dt>' + data1.metadata[2].label + '</dt><dd>' + data1.metadata[2].value + '</dd></dl>' +
-                '</div></div>' +
-                '</div>');
+            let info;
+            if (data1.metadata[1]) {
+                info = $('<div id="info" class="list-group">' +
+                    '<div class="scrollbar" id="style-1"><div class="force-overflow">' +
+                    '<span id="infoClose" > X </span>' +
+                    '<dl><dt>manifest URI</dt><dd><a href="' + manifest.data['@id'] + '">' + manifest.data['@id'] + '</a></dd></dl>' +
+                    '<dl><dt>Label</dt><dd>' + data1.label + '</dd></dl>' +
+                    '<dl><dt>Description</dt><dd>' + data1.description + '</dd></dl>' + '<dl><dt>Attribution</dt><dd>' + data1.attribution + '</dd></dl>' +
+                    '<dl><dt>License</dt><dd>' + data1.license + '</dd></dl>' +
+                    '<dl><dt>Logo</dt><dd>' + data1.logo['@id'] + '</dd></dl>' +
+                    '<dl><dt>Viewing Direction</dt><dd>' + data1.viewingDirection + '</dd></dl>' +
+                    '<dl><dt>Viewing Hint</dt><dd>' + data1.viewingHint + '</dd></dl>' +
+                    '<dl><dt>' + data1.metadata[0].label + '</dt><dd>' + data1.metadata[0].value + '</dd></dl>' +
+                    '<dl><dt>' + data1.metadata[1].label + '</dt><dd>' + p + '</dd></dl>' +
+                    '<dl><dt>' + data1.metadata[2].label + '</dt><dd>' + data1.metadata[2].value + '</dd></dl>' +
+                    '</div></div>' +
+                    '</div>');
+            }
+            else {
+                info = $('<div id="info" class="list-group">' +
+                    '<div class="scrollbar" id="style-1"><div class="force-overflow">' +
+                    '<span id="infoClose" > X </span>' +
+                    '<dl><dt>manifest URI</dt><dd><a href="' + manifest.data['@id'] + '">' + manifest.data['@id'] + '</a></dd></dl>' +
+                    '<dl><dt>Label</dt><dd>' + data1.label + '</dd></dl>' +
+                    '<dl><dt>Description</dt><dd>' + data1.description + '</dd></dl>' + '<dl><dt>Attribution</dt><dd>' + data1.attribution + '</dd></dl>' +
+                    '<dl><dt>License</dt><dd>' + data1.license + '</dd></dl>' +
+                    '<dl><dt>Logo</dt><dd>' + data1.logo['@id'] + '</dd></dl>' +
+                    '<dl><dt>Viewing Direction</dt><dd>' + data1.viewingDirection + '</dd></dl>' +
+                    '<dl><dt>Viewing Hint</dt><dd>' + data1.viewingHint + '</dd></dl>' +
+                    '</div></div>' +
+                    '</div>');
+            }
             div.append(icon, info);
             $(info[0]).find('a').attr("target", "_parent");
             $($('.leaflet-top.leaflet-right')[0]).prepend(div);
