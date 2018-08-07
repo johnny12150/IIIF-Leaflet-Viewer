@@ -39,6 +39,8 @@
         manifest.drawnItems2;
         // 被隱藏的註記列
         let hidden_layers = [];
+        // 控制能不能夠點label看detail
+        let label_clickable = true;
 
         // create leaflet map
         function leafletMap() {
@@ -228,8 +230,8 @@
                         xy_position = map.project(marker_latlng, zoomtemp);
 
                         // xywh 就是xy_position + 1, 1
-                        xywh = xy_position.x +','+xy_position.y+', 1, 1';
-                        point = strToPoint([xy_position.x, xy_position.y, 1, 1]);
+                        xywh = xy_position.x + ',' + xy_position.y + ', 10, 10';
+                        point = strToPoint([xy_position.x, xy_position.y, 10, 10]);
 
                         var annoData = {
                             'bounds': '',
@@ -240,7 +242,7 @@
                             '_leaflet_id': layer._leaflet_id,
                             'preMouseStatus': '',
                             'color': colorArray[layer._leaflet_id % 15],
-                            'area': 1,
+                            'area': 100,
                             'target': '',
                             'overlay': 'add',
                             'exist': true
@@ -1444,9 +1446,11 @@
         }
 
         function annoLableClick(arr) {
-            $('#backgroundLabel').hide();
-            $('#clickEventLabel').show();
-            $('#annoClick' + arr._leaflet_id).show();
+            if (label_clickable) {
+                $('#backgroundLabel').hide();
+                $('#clickEventLabel').show();
+                $('#annoClick' + arr._leaflet_id).show();
+            }
         }
 
         function set_layerGroup() {
