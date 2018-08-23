@@ -688,6 +688,7 @@
                         },
                         body: JSON.stringify({
                             resource_id: delete_data_source_id,
+                            // fixme: 多頁的刪除會出錯因為aId給錯
                             aId: the_aId[0]
                         })
                     })
@@ -1061,15 +1062,21 @@
             var minPoint = L.point(str[0], str[1]);
             var maxPoint = L.point(parseInt(str[0]) + parseInt(str[2]), parseInt(str[1]) + parseInt(str[3]));
             var x = minPoint.x, y = minPoint.y;
+            let t1;
 
             switch (rotation) {
                 case 0:
                     break;
                 case 90:
-                    minPoint.x = canvasSize.height - maxPoint.y;
-                    minPoint.y = maxPoint.x;
-                    maxPoint.x = canvasSize.height - y;
-                    maxPoint.y = x;
+                    // minPoint.x = canvasSize.height - maxPoint.y;
+                    // minPoint.y = maxPoint.x;
+                    // maxPoint.x = canvasSize.height - y;
+                    // maxPoint.y = x;
+                    minPoint.x = canvasSize.height - y;
+                    minPoint.y = x;
+                    t1 = maxPoint.x;
+                    maxPoint.x = canvasSize.height - maxPoint.y;
+                    maxPoint.y = t1;
                     break;
                 case 180:
                     minPoint.x = canvasSize.width - maxPoint.x;
