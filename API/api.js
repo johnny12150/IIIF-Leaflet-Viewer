@@ -672,9 +672,7 @@
                         ['@id'];
                     console.log("被刪除的註記的source @id : " + delete_data_source_id);
 
-                    // 處理一下要給過去的anno id
-                    // 直接用第一個annolist的是因為同一筆的annoId都一樣
-                    var pass_aId = manifest.annolist[0]['@id'].split("body_").pop();
+                    var pass_aId = delete_data_source_id.split("body_").pop();
                     var the_aId = pass_aId.split("_");
 
                     // fetch 要刪除的資訊到anno API
@@ -1117,6 +1115,7 @@
         function change() {
             manifest.leaflet.remove();
             manifest.currenCanvas = manifest.canvasArray[manifest.index - 1];
+            path_order = [];
             manifest.leaflet = leafletMap();
         }
 
